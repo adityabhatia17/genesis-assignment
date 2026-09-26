@@ -19,13 +19,15 @@ const RawSchema = z.object({
   APP_BASE_URL: z.url(),
   ALLOWED_ORIGINS: csv.pipe(z.array(z.string().min(1)).min(1)),
   HL_REDIRECT_URI: z.url().refine((u) => !/highlevel|leadconnector|ghl/i.test(u), {
-    message: 'HL_REDIRECT_URI must not contain "highlevel", "leadconnector" or "ghl" (HighLevel rejects it)',
+    message:
+      'HL_REDIRECT_URI must not contain "highlevel", "leadconnector" or "ghl" (HighLevel rejects it)',
   }),
   HL_SCOPES: spaced.pipe(z.array(z.string()).min(1)),
   HL_API_BASE_URL: z.url(),
   HL_AUTHORIZE_URL: z.url(),
   ANTHROPIC_MODEL: z.string().min(1),
   ANTHROPIC_EFFORT: z.enum(['low', 'medium', 'high', 'xhigh', 'max']),
+  ANTHROPIC_WORKSPACE_ID: z.string().default(''),
   LLM_PROVIDER: z.enum(['anthropic', 'fake']),
   SSE_SMOKE_ENABLED: bool,
 });
@@ -39,6 +41,7 @@ export interface RuntimeConfig {
   readonly hlAuthorizeUrl: string;
   readonly anthropicModel: string;
   readonly anthropicEffort: 'low' | 'medium' | 'high' | 'xhigh' | 'max';
+  readonly anthropicWorkspaceId: string;
   readonly llmProvider: 'anthropic' | 'fake';
   readonly sseSmokeEnabled: boolean;
   /** Out of v1 (R-B). Always false. */
@@ -58,6 +61,7 @@ export function parseRuntimeConfig(raw: Record<string, unknown>): RuntimeConfig 
     hlAuthorizeUrl: r.HL_AUTHORIZE_URL,
     anthropicModel: r.ANTHROPIC_MODEL,
     anthropicEffort: r.ANTHROPIC_EFFORT,
+    anthropicWorkspaceId: r.ANTHROPIC_WORKSPACE_ID,
     llmProvider: r.LLM_PROVIDER,
     sseSmokeEnabled: r.SSE_SMOKE_ENABLED,
     anthropicFastMode: false,
@@ -76,6 +80,7 @@ export function loadRuntimeConfig(): RuntimeConfig {
     HL_AUTHORIZE_URL: p.HL_AUTHORIZE_URL.value(),
     ANTHROPIC_MODEL: p.ANTHROPIC_MODEL.value(),
     ANTHROPIC_EFFORT: p.ANTHROPIC_EFFORT.value(),
+    ANTHROPIC_WORKSPACE_ID: p.ANTHROPIC_WORKSPACE_ID.value(),
     LLM_PROVIDER: p.LLM_PROVIDER.value(),
     SSE_SMOKE_ENABLED: p.SSE_SMOKE_ENABLED.value(),
   });
