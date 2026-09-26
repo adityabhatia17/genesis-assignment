@@ -1,0 +1,31 @@
+// GENERATED FILE — DO NOT EDIT.
+// Source of truth: functions/src/contracts. Run `npm run contracts:sync` from the repo root.
+
+export const LIMITS = {
+  promptMaxChars: 4_000,
+  maxFiles: 25,
+  maxFileBytes: 102_400,
+  maxProjectBytes: 307_200,
+  maxPathSegments: 3,
+  historyMessages: 12,
+  historyMessageMaxChars: 4_000,
+  projectNameMax: 60,
+  projectDescriptionMax: 280,
+  generationDeadlineMs: 300_000,
+  heartbeatMs: 15_000,
+  staleLeaseMs: 60_000,
+  oauthStateTtlMs: 600_000,
+  sseWatchdogMs: 45_000,
+  maxOutputTokens: 32_000,
+  rawArtifactMaxBytes: 900_000,
+  pageLimitDefault: 20,
+  pageLimitMax: 100,
+  calendarRangeMaxDays: 31,
+  calendarFanOutMax: 10,
+  externalCalendarsMax: 20,
+  bridgeMaxInFlight: 6,
+  bridgeCallsPerMinute: 120,
+  bridgeWritesPerMinute: 10,
+  bridgeCallTimeoutMs: 20_000,
+  bridgeMaxParamsBytes: 65_536,
+} as const;
