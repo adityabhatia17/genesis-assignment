@@ -1,30 +1,30 @@
-import type { ApplyResult } from "@/contracts/api";
-import type { Issue, PartialResult } from "@/contracts/firestore-docs";
-import type { FileLanguage } from "@/contracts/paths";
-import type { GenerationEvent, GenerationPhase } from "@/contracts/sse";
+import type { ApplyResult } from '@/contracts/api';
+import type { Issue, PartialResult } from '@/contracts/firestore-docs';
+import type { FileLanguage } from '@/contracts/paths';
+import type { GenerationEvent, GenerationPhase } from '@/contracts/sse';
 
 export type GenerationStatus =
-  | "idle"
-  | "submitting"
-  | "streaming"
-  | "cancelling"
-  | "reconciling"
-  | "completed"
-  | "failed"
-  | "cancelled"
-  | "interrupted";
-export type TerminalStatus = "completed" | "failed" | "interrupted";
+  | 'idle'
+  | 'submitting'
+  | 'streaming'
+  | 'cancelling'
+  | 'reconciling'
+  | 'completed'
+  | 'failed'
+  | 'cancelled'
+  | 'interrupted';
+export type TerminalStatus = 'completed' | 'failed' | 'interrupted';
 
 export const isTerminal = (s: GenerationStatus): s is TerminalStatus =>
-  s === "completed" || s === "failed" || s === "interrupted";
+  s === 'completed' || s === 'failed' || s === 'interrupted';
 export const isActive = (s: GenerationStatus): boolean =>
-  s === "submitting" || s === "streaming" || s === "reconciling";
+  s === 'submitting' || s === 'streaming' || s === 'reconciling';
 
 export interface FileOpState {
   path: string;
-  op: "write" | "delete";
+  op: 'write' | 'delete';
   language: FileLanguage | null;
-  status: "streaming" | "valid" | "rejected" | "deleted";
+  status: 'streaming' | 'valid' | 'rejected' | 'deleted';
   chars: number;
   issues: Issue[];
 }
@@ -49,7 +49,7 @@ export interface GenerationState {
   generationId: string | null;
   prompt: string;
   /** 'remote' = started in another tab or an earlier session; this tab only observes it. */
-  origin: "local" | "remote";
+  origin: 'local' | 'remote';
   phase: GenerationPhase | null;
   thinking: string;
   prose: string;
@@ -68,7 +68,7 @@ export interface GenerationState {
 /** What the reducer needs from a persisted generation document (see generations.repo.ts). */
 export interface GenerationSnapshot {
   id: string;
-  status: "streaming" | TerminalStatus;
+  status: 'streaming' | TerminalStatus;
   prompt: string;
   error: GenerationErrorState | null;
   partial: PartialResult | null;
@@ -77,24 +77,24 @@ export interface GenerationSnapshot {
 }
 
 export type GenerationAction =
-  | { type: "submit"; generationId: string; prompt: string; at: number }
-  | { type: "attach"; generationId: string; prompt: string; at: number }
-  | { type: "event"; event: GenerationEvent; at: number }
-  | { type: "cancel-requested" }
-  | { type: "stream-lost" }
-  | { type: "reconciled"; snapshot: GenerationSnapshot }
-  | { type: "partial-applied"; result: ApplyResult }
-  | { type: "reset" };
+  | { type: 'submit'; generationId: string; prompt: string; at: number }
+  | { type: 'attach'; generationId: string; prompt: string; at: number }
+  | { type: 'event'; event: GenerationEvent; at: number }
+  | { type: 'cancel-requested' }
+  | { type: 'stream-lost' }
+  | { type: 'reconciled'; snapshot: GenerationSnapshot }
+  | { type: 'partial-applied'; result: ApplyResult }
+  | { type: 'reset' };
 
 export function initialGenerationState(): GenerationState {
   return {
-    status: "idle",
+    status: 'idle',
     generationId: null,
-    prompt: "",
-    origin: "local",
+    prompt: '',
+    origin: 'local',
     phase: null,
-    thinking: "",
-    prose: "",
+    thinking: '',
+    prose: '',
     files: {},
     fileOrder: [],
     streamingPath: null,
@@ -108,20 +108,17 @@ export function initialGenerationState(): GenerationState {
 }
 
 const INTERRUPTED: GenerationErrorState = {
-  code: "GENERATION_INTERRUPTED",
-  message: "The connection was lost during generation.",
+  code: 'GENERATION_INTERRUPTED',
+  message: 'The connection was lost during generation.',
   retryable: true,
 };
 const FAILED: GenerationErrorState = {
-  code: "INTERNAL",
-  message: "Something went wrong. Please try again.",
+  code: 'INTERNAL',
+  message: 'Something went wrong. Please try again.',
   retryable: true,
 };
 
-const withFile = (
-  state: GenerationState,
-  file: FileOpState,
-): Partial<GenerationState> => ({
+const withFile = (state: GenerationState, file: FileOpState): Partial<GenerationState> => ({
   files: { ...state.files, [file.path]: file },
   fileOrder: state.fileOrder.includes(file.path)
     ? state.fileOrder
@@ -129,53 +126,42 @@ const withFile = (
 });
 
 /** SSE protocol v1 (07 §3.2). Ignores foreign, duplicate and late events. */
-function reduceEvent(
-  state: GenerationState,
-  e: GenerationEvent,
-  at: number,
-): GenerationState {
+function reduceEvent(state: GenerationState, e: GenerationEvent, at: number): GenerationState {
   const receiving =
-    state.status === "submitting" ||
-    state.status === "streaming" ||
-    state.status === "cancelling";
-  if (
-    !receiving ||
-    e.generationId !== state.generationId ||
-    e.seq <= state.lastSeq
-  )
-    return state;
+    state.status === 'submitting' || state.status === 'streaming' || state.status === 'cancelling';
+  if (!receiving || e.generationId !== state.generationId || e.seq <= state.lastSeq) return state;
   const base: GenerationState = {
     ...state,
     lastSeq: e.seq,
     lastEventAt: at,
-    status: state.status === "submitting" ? "streaming" : state.status,
+    status: state.status === 'submitting' ? 'streaming' : state.status,
   };
   const end = { phase: null, streamingPath: null } as const;
 
   switch (e.type) {
-    case "generation.started":
-      return { ...base, phase: "context" };
-    case "generation.phase":
+    case 'generation.started':
+      return { ...base, phase: 'context' };
+    case 'generation.phase':
       return { ...base, phase: e.data.phase };
-    case "assistant.thinking":
+    case 'assistant.thinking':
       return { ...base, thinking: state.thinking + e.data.text };
-    case "assistant.delta":
+    case 'assistant.delta':
       return { ...base, prose: state.prose + e.data.text };
-    case "file.started":
+    case 'file.started':
       return {
         ...base,
-        phase: "writing",
+        phase: 'writing',
         streamingPath: e.data.path,
         ...withFile(state, {
           path: e.data.path,
-          op: "write",
+          op: 'write',
           language: e.data.language,
-          status: "streaming",
+          status: 'streaming',
           chars: 0,
           issues: [],
         }),
       };
-    case "file.delta": {
+    case 'file.delta': {
       const file = state.files[e.data.path];
       if (!file) return base;
       return {
@@ -183,15 +169,14 @@ function reduceEvent(
         ...withFile(state, { ...file, chars: file.chars + e.data.text.length }),
       };
     }
-    case "file.completed": {
+    case 'file.completed': {
       const file = state.files[e.data.path];
       return {
         ...base,
-        streamingPath:
-          state.streamingPath === e.data.path ? null : state.streamingPath,
+        streamingPath: state.streamingPath === e.data.path ? null : state.streamingPath,
         ...withFile(state, {
           path: e.data.path,
-          op: "write",
+          op: 'write',
           language: file?.language ?? null,
           status: e.data.status,
           chars: file?.chars ?? 0,
@@ -199,25 +184,25 @@ function reduceEvent(
         }),
       };
     }
-    case "file.deleted":
+    case 'file.deleted':
       return {
         ...base,
         ...withFile(state, {
           path: e.data.path,
-          op: "delete",
+          op: 'delete',
           language: null,
-          status: e.data.status === "valid" ? "deleted" : "rejected",
+          status: e.data.status === 'valid' ? 'deleted' : 'rejected',
           chars: 0,
           issues: e.data.issues,
         }),
       };
-    case "heartbeat":
+    case 'heartbeat':
       return base;
-    case "generation.completed":
+    case 'generation.completed':
       return {
         ...base,
         ...end,
-        status: "completed",
+        status: 'completed',
         error: null,
         partial: null,
         result: {
@@ -229,11 +214,11 @@ function reduceEvent(
           noChanges: e.data.noChanges,
         },
       };
-    case "generation.failed":
+    case 'generation.failed':
       return {
         ...base,
         ...end,
-        status: "failed",
+        status: 'failed',
         error: e.data.error,
         partial: e.data.partial,
       };
@@ -241,15 +226,10 @@ function reduceEvent(
 }
 
 /** Applies the persisted outcome after the stream was lost, or for a generation seen from another tab. */
-function reduceReconciled(
-  state: GenerationState,
-  g: GenerationSnapshot,
-): GenerationState {
+function reduceReconciled(state: GenerationState, g: GenerationSnapshot): GenerationState {
   if (g.id !== state.generationId || !isActive(state.status)) return state;
-  if (g.status === "streaming") {
-    return state.status === "submitting"
-      ? { ...state, status: "reconciling" }
-      : state;
+  if (g.status === 'streaming') {
+    return state.status === 'submitting' ? { ...state, status: 'reconciling' } : state;
   }
   const common: GenerationState = {
     ...state,
@@ -258,32 +238,25 @@ function reduceReconciled(
     prompt: state.prompt || g.prompt,
   };
   switch (g.status) {
-    case "completed":
+    case 'completed':
       return {
         ...common,
-        status: "completed",
+        status: 'completed',
         error: null,
         partial: null,
         result: g.result,
       };
-    case "failed":
+    case 'failed':
       return {
         ...common,
-        status: "failed",
+        status: 'failed',
         error: g.error ?? FAILED,
         partial: g.partial,
       };
-    case "cancelled":
+    case 'interrupted':
       return {
         ...common,
-        status: "cancelled",
-        error: null,
-        partial: g.partial,
-      };
-    case "interrupted":
-      return {
-        ...common,
-        status: "interrupted",
+        status: 'interrupted',
         error: g.error ?? INTERRUPTED,
         partial: g.partial,
       };
@@ -295,41 +268,39 @@ export function reduceGeneration(
   action: GenerationAction,
 ): GenerationState {
   switch (action.type) {
-    case "submit":
+    case 'submit':
       return {
         ...initialGenerationState(),
-        status: "submitting",
+        status: 'submitting',
         generationId: action.generationId,
         prompt: action.prompt,
         startedAt: action.at,
       };
-    case "attach":
+    case 'attach':
       return {
         ...initialGenerationState(),
-        status: "reconciling",
-        origin: "remote",
+        status: 'reconciling',
+        origin: 'remote',
         generationId: action.generationId,
         prompt: action.prompt,
         startedAt: action.at,
       };
-    case "event":
+    case 'event':
       return reduceEvent(state, action.event, action.at);
-    case "cancel-requested":
-      return state.status === "submitting" ||
-        state.status === "streaming" ||
-        state.status === "reconciling"
-        ? { ...state, status: "cancelling" }
+    case 'cancel-requested':
+      return state.status === 'submitting' ||
+        state.status === 'streaming' ||
+        state.status === 'reconciling'
+        ? { ...state, status: 'cancelling' }
         : state;
-    case "stream-lost":
-      return isActive(state.status)
-        ? { ...state, status: "reconciling" }
-        : state;
-    case "reconciled":
+    case 'stream-lost':
+      return isActive(state.status) ? { ...state, status: 'reconciling' } : state;
+    case 'reconciled':
       return reduceReconciled(state, action.snapshot);
-    case "partial-applied":
+    case 'partial-applied':
       return {
         ...state,
-        status: "completed",
+        status: 'completed',
         error: null,
         partial: null,
         result: {
@@ -341,7 +312,7 @@ export function reduceGeneration(
           noChanges: false,
         },
       };
-    case "reset":
+    case 'reset':
       return initialGenerationState();
   }
 }
