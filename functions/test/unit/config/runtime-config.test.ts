@@ -19,6 +19,7 @@ describe('parseRuntimeConfig', () => {
     expect(c.allowedOrigins).toEqual(['https://x.web.app', 'http://localhost:5173']);
     expect(c.hlScopes).toEqual(['contacts.readonly', 'locations.readonly']);
     expect(c.llmProvider).toBe('fake');
+    expect(c.anthropicWorkspaceId).toBe('');
     expect(c.anthropicFastMode).toBe(false);
     expect(c.hlExtendedMethods).toBe(false);
   });
@@ -26,6 +27,11 @@ describe('parseRuntimeConfig', () => {
     expect(() =>
       parseRuntimeConfig({ ...raw, HL_REDIRECT_URI: 'https://genesis-highlevel.web.app/cb' }),
     ).toThrow(/highlevel/i);
+  });
+  it('keeps a workspace id when set', () => {
+    expect(
+      parseRuntimeConfig({ ...raw, ANTHROPIC_WORKSPACE_ID: 'wrkspc_test' }).anthropicWorkspaceId,
+    ).toBe('wrkspc_test');
   });
   it('rejects unknown effort', () => {
     expect(() => parseRuntimeConfig({ ...raw, ANTHROPIC_EFFORT: 'ultra' })).toThrow();

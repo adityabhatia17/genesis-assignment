@@ -135,11 +135,21 @@ function buildGenerateApp(config: RuntimeConfig): Express {
     logger: logger.child({ component: 'hl' }),
   });
   const locationContext = new LocationContextService({ connections, tokens, hl, clock, logger });
+  if (config.llmProvider === 'anthropic' && !config.anthropicWorkspaceId) {
+    throw new Error('ANTHROPIC_WORKSPACE_ID is required when LLM_PROVIDER=anthropic');
+  }
   const provider: ModelProvider =
     config.llmProvider === 'fake'
       ? new FakeProvider({ chunkDelayMs: 15 })
       : new AnthropicProvider(
-          new Anthropic({ apiKey: secrets.anthropicApiKey ?? '', maxRetries: 2, timeout: 600_000 }),
+          new Anthropic({
+            apiKey: secrets.anthropicApiKey ?? '',
+            maxRetries: 2,
+            timeout: 600_000,
+            ...(config.anthropicWorkspaceId
+              ? { defaultHeaders: { 'anthropic-workspace-id': config.anthropicWorkspaceId } }
+              : {}),
+          }),
           {
             model: config.anthropicModel,
             effort: config.anthropicEffort,

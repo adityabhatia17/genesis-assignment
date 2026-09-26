@@ -28,8 +28,10 @@ export const HL_API_BASE_URL = defineString('HL_API_BASE_URL', {
 export const HL_AUTHORIZE_URL = defineString('HL_AUTHORIZE_URL', {
   default: 'https://marketplace.gohighlevel.com/v2/oauth/chooselocation',
 });
-export const ANTHROPIC_MODEL = defineString('ANTHROPIC_MODEL', { default: 'claude-opus-5' });
+export const ANTHROPIC_MODEL = defineString('ANTHROPIC_MODEL', { default: 'claude-sonnet-5' });
 export const ANTHROPIC_EFFORT = defineString('ANTHROPIC_EFFORT', { default: 'medium' });
+/** Required for an org API key that is not already scoped to one workspace. */
+export const ANTHROPIC_WORKSPACE_ID = defineString('ANTHROPIC_WORKSPACE_ID', { default: '' });
 export const LLM_PROVIDER = defineString('LLM_PROVIDER', { default: 'anthropic' });
 export const SSE_SMOKE_ENABLED = defineString('SSE_SMOKE_ENABLED', { default: 'false' });
 export const API_MIN_INSTANCES = defineInt('API_MIN_INSTANCES', { default: 0 });
