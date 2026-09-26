@@ -1,11 +1,16 @@
 <script setup lang="ts">
+import { onBeforeUnmount } from 'vue';
 import PageState from '@/components/common/PageState.vue';
 import { useAuth } from '@/composables/useAuth';
 import { useFirestoreDoc } from '@/composables/useFirestoreDoc';
 import { toUserMessage } from '@/lib/errors';
 import { refs } from '@/services/firestore/paths';
-import { useProjectFiles } from './composables/useProjectFiles';
 import { useGeneration } from './composables/useGeneration';
+import { useProjectFiles } from './composables/useProjectFiles';
+import { useRemoteFileSync } from './composables/useRemoteFileSync';
+import { useStreamingEditor } from './composables/useStreamingEditor';
+import { EditorModels } from './editor/editor-models';
+import { setupMonaco } from './editor/monaco-setup';
 import { useWorkspaceStore } from './stores/workspace.store';
 import { provideWorkspace } from './workspace-context';
 import WorkspaceHeader from './WorkspaceHeader.vue';
@@ -20,6 +25,9 @@ workspace.reset(props.projectId);
 
 const project = useFirestoreDoc(() => refs.project(uid, props.projectId));
 const files = useProjectFiles(uid, props.projectId);
+const models = new EditorModels(setupMonaco(), props.projectId, {
+  onDirtyChange: (path, dirty) => workspace.setDirty(path, dirty),
+});
 
 provideWorkspace({
   uid,
@@ -27,9 +35,14 @@ provideWorkspace({
   project: project.data,
   files: files.data,
   filesLoading: files.loading,
+  models,
 });
 
 useGeneration();
+useStreamingEditor();
+useRemoteFileSync();
+
+onBeforeUnmount(() => models.disposeAll());
 </script>
 
 <template>
