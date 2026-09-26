@@ -58,7 +58,7 @@ export class RestoreService {
       messages: [
         {
           role: 'system',
-          content: `Restored snapshot #${seq}.`,
+          content: `Restored history #${seq}.`,
           generationId: null,
           meta: null,
         },

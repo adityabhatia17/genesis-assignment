@@ -11,6 +11,7 @@ import { useRemoteFileSync } from './composables/useRemoteFileSync';
 import { useStreamingEditor } from './composables/useStreamingEditor';
 import { EditorModels } from './editor/editor-models';
 import { setupMonaco } from './editor/monaco-setup';
+import SnapshotHistorySheet from '@/features/snapshots/SnapshotHistorySheet.vue';
 import { useWorkspaceStore } from './stores/workspace.store';
 import { provideWorkspace } from './workspace-context';
 import WorkspaceHeader from './WorkspaceHeader.vue';
@@ -68,5 +69,6 @@ onBeforeUnmount(() => models.disposeAll());
   <div v-else class="flex h-dvh flex-col bg-background">
     <WorkspaceHeader />
     <WorkspaceLayout />
+    <SnapshotHistorySheet />
   </div>
 </template>

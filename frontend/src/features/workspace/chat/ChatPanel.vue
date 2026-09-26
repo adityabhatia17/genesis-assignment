@@ -2,7 +2,9 @@
 import { useOnline } from '@vueuse/core';
 import { storeToRefs } from 'pinia';
 import { computed, ref } from 'vue';
+import PageState from '@/components/common/PageState.vue';
 import { useHighLevelConnection } from '@/features/highlevel/useHighLevelConnection';
+import { toUserMessage } from '@/lib/errors';
 import { useProjectMessages } from '../composables/useProjectMessages';
 import { isActive } from '../stores/generation.reducer';
 import { useGenerationStore } from '../stores/generation.store';
@@ -20,7 +22,7 @@ const workspace = useWorkspaceStore();
 const { state } = storeToRefs(generation);
 const { status: hlStatus } = useHighLevelConnection();
 const online = useOnline();
-const { data: messages, loading } = useProjectMessages(ws.uid, ws.projectId);
+const { data: messages, loading, error, retry } = useProjectMessages(ws.uid, ws.projectId);
 const draft = ref('');
 
 const persisted = computed(() =>
@@ -49,7 +51,15 @@ function openFile(path: string): void {
 
 <template>
   <section class="flex h-full min-h-0 flex-col" aria-label="Chat">
-    <MessageList :messages="messages" :loading="loading" :live-key="liveKey">
+    <PageState
+      v-if="error && messages.length === 0"
+      kind="error"
+      title="Couldn't load the conversation"
+      :description="toUserMessage(error)"
+      action-label="Retry"
+      @action="retry"
+    />
+    <MessageList v-else :messages="messages" :loading="loading" :live-key="liveKey">
       <LiveAssistantMessage v-if="showLive" :state="state" @open-file="openFile" />
     </MessageList>
     <GenerationOutcomeBanner />

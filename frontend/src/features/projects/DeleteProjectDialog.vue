@@ -34,8 +34,8 @@ async function onConfirm(): Promise<void> {
       <AlertDialogHeader>
         <AlertDialogTitle>Delete “{{ props.project?.name }}”?</AlertDialogTitle>
         <AlertDialogDescription>
-          It will be removed from your projects. Files and snapshots are kept in storage but no
-          longer shown.
+          It will be removed from your projects. Files and history are kept in storage but no longer
+          shown.
         </AlertDialogDescription>
       </AlertDialogHeader>
       <AlertDialogFooter>

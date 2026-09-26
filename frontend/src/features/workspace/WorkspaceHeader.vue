@@ -49,7 +49,7 @@ async function rename(values: ProjectFormValues): Promise<void> {
     <div class="ml-auto flex items-center gap-2">
       <ConnectionBadge />
       <Button variant="outline" size="sm" @click="workspace.historyOpen = true">
-        <HistoryIcon />Snapshots
+        <HistoryIcon />History
       </Button>
       <UserMenu />
     </div>

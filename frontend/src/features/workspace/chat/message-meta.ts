@@ -10,7 +10,7 @@ export function formatPaths(paths: readonly string[], max = 3): string {
   return paths.length > max ? `${shown} +${paths.length - max} more` : shown;
 }
 
-/** The small line under an assistant/system message: "Changed app.js, styles.css · Snapshot #4". */
+/** The small line under an assistant/system message: "Changed app.js, styles.css · History #4". */
 export function describeMessageMeta(
   role: 'user' | 'assistant' | 'system',
   meta: MessageMeta | null,
@@ -26,7 +26,7 @@ export function describeMessageMeta(
   if (deleted.length > 0) parts.push(`Deleted ${formatPaths(deleted)}`);
   if (changed.length === 0 && deleted.length === 0 && meta.status === 'completed')
     parts.push('No file changes');
-  if (typeof meta.snapshotSeq === 'number') parts.push(`Snapshot #${meta.snapshotSeq}`);
+  if (typeof meta.snapshotSeq === 'number') parts.push(`History #${meta.snapshotSeq}`);
   const rejected = meta.rejectedPaths?.length ?? 0;
   if (rejected > 0) parts.push(`${rejected} file${rejected === 1 ? '' : 's'} rejected`);
   return parts.length > 0
