@@ -1,0 +1,218 @@
+@import 'tailwindcss';
+@import 'tw-animate-css';
+@import '@fontsource-variable/geist';
+@import '@fontsource-variable/geist-mono';
+
+@custom-variant dark (&:is(.dark *));
+
+@theme {
+  /* Design system §3 — Geist's 11/12/13/14/15/18/20/22px scale.
+     text-sm (13px) is the workspace default; text-base (14px) is auth/dashboard body. */
+  --text-2xs: 0.6875rem; /* 11px — version tags, shortcut keys */
+  --text-2xs--line-height: 1rem;
+  --text-xs: 0.75rem; /* 12px — captions, mono file paths */
+  --text-xs--line-height: 1.4;
+  --text-sm: 0.8125rem; /* 13px — workspace body */
+  --text-sm--line-height: 1.45;
+  --text-base: 0.875rem; /* 14px — auth/dashboard body */
+  --text-base--line-height: 1.45;
+  --text-md: 0.9375rem; /* 15px — dialog/sheet titles */
+  --text-md--line-height: 1.3;
+  --text-lg: 1.125rem; /* 18px — page-state titles */
+  --text-lg--line-height: 1.25;
+  --text-xl: 1.25rem; /* 20px — auth title */
+  --text-xl--line-height: 1.2;
+  --text-2xl: 1.375rem; /* 22px — page title */
+  --text-2xl--line-height: 1.2;
+  --text-2xl--letter-spacing: -0.015em;
+}
+
+@theme inline {
+  --font-sans: 'Geist Variable', ui-sans-serif, system-ui, sans-serif;
+  --font-heading: var(--font-sans);
+  --font-mono: 'Geist Mono Variable', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-primary-hover: var(--primary-hover);
+  --color-primary-soft: var(--primary-soft);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --color-foreground: var(--foreground);
+  --color-background: var(--background);
+  --color-success: var(--success);
+  --color-success-soft: var(--success-soft);
+  --color-warning: var(--warning);
+  --color-warning-soft: var(--warning-soft);
+  --color-destructive-soft: var(--destructive-soft);
+  --color-faint-foreground: var(--faint-foreground);
+  --color-code: var(--code);
+  --color-syntax-keyword: var(--syntax-keyword);
+  --color-syntax-string: var(--syntax-string);
+  --color-syntax-number: var(--syntax-number);
+  --color-syntax-property: var(--syntax-property);
+  --color-scrim: var(--scrim);
+  --radius-sm: calc(var(--radius) - 6px); /* 4px — badges */
+  --radius-md: calc(var(--radius) - 4px); /* 6px — buttons, inputs */
+  --radius-lg: var(--radius); /* 8px — cards, menus, toasts */
+  --radius-xl: calc(var(--radius) + 2px); /* 10px — dialogs, sheets */
+  --shadow-elevation: var(--elevation);
+}
+
+:root {
+  --radius: 0.5rem; /* 8px base; see radius-* mapping above for the 4/6/8/10px scale */
+
+  /* Design system §2.1 (light) */
+  --background: #f7f7f6;
+  --foreground: #1a1a19;
+  --card: #ffffff;
+  --card-foreground: #1a1a19;
+  --popover: #ffffff;
+  --popover-foreground: #1a1a19;
+  --primary: oklch(0.5 0.12 255);
+  --primary-hover: oklch(0.45 0.12 255);
+  --primary-foreground: #ffffff;
+  --primary-soft: oklch(0.95 0.025 255);
+  --secondary: #f2f2f0;
+  --secondary-foreground: #1a1a19;
+  --muted: #f2f2f0;
+  --muted-foreground: #57564f;
+  --faint-foreground: #6f6e68;
+  --accent: #ececea;
+  --accent-foreground: #1a1a19;
+  --destructive: oklch(0.52 0.14 27);
+  --destructive-foreground: #ffffff;
+  --destructive-soft: oklch(0.96 0.02 27);
+  --border: #e6e5e2;
+  --input: #d6d5d1;
+  /* Opaque form of the design's semi-transparent ring token. shadcn's ring
+     utilities already apply 50% alpha, so storing an alpha token here would
+     double-compound it to near invisibility. See 11-design-system.md section 8. */
+  --ring: oklch(0.62 0.13 255);
+  --success: oklch(0.5 0.09 150);
+  --success-soft: oklch(0.95 0.03 150);
+  --warning: oklch(0.52 0.1 70);
+  --warning-soft: oklch(0.96 0.035 85);
+  --code: #fcfcfb;
+  --syntax-keyword: oklch(0.48 0.13 255);
+  --syntax-string: oklch(0.48 0.09 150);
+  --syntax-number: oklch(0.52 0.1 55);
+  --syntax-property: oklch(0.47 0.08 200);
+  --scrim: rgb(20 20 18 / 0.28);
+  --elevation: 0 1px 2px rgb(0 0 0 / 0.04), 0 8px 24px rgb(0 0 0 / 0.08);
+  --chart-1: oklch(0.646 0.222 41.116);
+  --chart-2: oklch(0.6 0.118 184.704);
+  --chart-3: oklch(0.398 0.07 227.392);
+  --chart-4: oklch(0.828 0.189 84.429);
+  --chart-5: oklch(0.769 0.188 70.08);
+  --sidebar: #ffffff;
+  --sidebar-foreground: #1a1a19;
+  --sidebar-primary: oklch(0.5 0.12 255);
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #ececea;
+  --sidebar-accent-foreground: #1a1a19;
+  --sidebar-border: #e6e5e2;
+  --sidebar-ring: oklch(0.62 0.13 255);
+}
+
+.dark {
+  /* Design system §2.2 (dark) */
+  --background: #0f0f0e;
+  --foreground: #ececea;
+  --card: #151514;
+  --card-foreground: #ececea;
+  --popover: #151514;
+  --popover-foreground: #ececea;
+  --primary: oklch(0.72 0.1 255);
+  --primary-hover: oklch(0.78 0.09 255);
+  --primary-foreground: #0e1014;
+  --primary-soft: oklch(0.3 0.04 255);
+  --secondary: #1b1b1a;
+  --secondary-foreground: #ececea;
+  --muted: #1b1b1a;
+  --muted-foreground: #a6a59f;
+  --faint-foreground: #85847d;
+  --accent: #222220;
+  --accent-foreground: #ececea;
+  /* Destructive label: 11-design-system.md §8 finding 1 — white-on-err fails AA in dark
+     mode (2.61:1). Use the theme background as the label color instead (7.35:1). */
+  --destructive: oklch(0.72 0.12 27);
+  --destructive-foreground: #0f0f0e;
+  --destructive-soft: oklch(0.29 0.05 27);
+  --border: #262624;
+  --input: #34332f;
+  --ring: oklch(0.72 0.1 255);
+  --success: oklch(0.74 0.09 150);
+  --success-soft: oklch(0.28 0.035 150);
+  --warning: oklch(0.78 0.1 80);
+  --warning-soft: oklch(0.29 0.04 80);
+  --code: #121211;
+  --syntax-keyword: oklch(0.76 0.1 255);
+  --syntax-string: oklch(0.76 0.09 150);
+  --syntax-number: oklch(0.8 0.09 70);
+  --syntax-property: oklch(0.78 0.08 200);
+  --scrim: rgb(0 0 0 / 0.55);
+  --elevation: 0 1px 2px rgb(0 0 0 / 0.4), 0 12px 32px rgb(0 0 0 / 0.5);
+  --chart-1: oklch(0.488 0.243 264.376);
+  --chart-2: oklch(0.696 0.17 162.48);
+  --chart-3: oklch(0.769 0.188 70.08);
+  --chart-4: oklch(0.627 0.265 303.9);
+  --chart-5: oklch(0.645 0.246 16.439);
+  --sidebar: #151514;
+  --sidebar-foreground: #ececea;
+  --sidebar-primary: oklch(0.72 0.1 255);
+  --sidebar-primary-foreground: #0e1014;
+  --sidebar-accent: #222220;
+  --sidebar-accent-foreground: #ececea;
+  --sidebar-border: #262624;
+  --sidebar-ring: oklch(0.72 0.1 255);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+@keyframes pulse-opacity {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+/* Opacity-only skeleton shimmer — design system §6, no color pulse. */
+@utility animate-pulse-opacity {
+  animation: pulse-opacity 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}

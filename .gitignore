@@ -17,6 +17,7 @@ coverage/
 .env
 .env.*
 !.env.example
+!frontend/.env.production
 *.local
 .secret.local
 !.secret.local.example
