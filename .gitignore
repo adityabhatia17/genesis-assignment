@@ -1,0 +1,31 @@
+# project-local JDK / caches (never a global install)
+.tools/
+
+# dependencies / builds
+node_modules/
+dist/
+lib/
+coverage/
+.vite/
+
+# firebase
+.firebase/
+*-debug.log*
+.emulator-data/
+
+# env & secrets (only *.example files are committed)
+.env
+.env.*
+!.env.example
+*.local
+.secret.local
+!.secret.local.example
+service-account*.json
+*-credentials.json
+spike-tokens.json
+
+# os / editors
+.DS_Store
+.idea/
+.vscode/*
+!.vscode/extensions.json
