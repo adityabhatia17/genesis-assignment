@@ -29,3 +29,6 @@ spike-tokens.json
 .idea/
 .vscode/*
 !.vscode/extensions.json
+
+# recorded fixtures before scrubbing
+functions/test/fixtures/hl/raw/

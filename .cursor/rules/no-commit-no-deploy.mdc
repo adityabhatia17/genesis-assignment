@@ -1,0 +1,11 @@
+---
+description: Do not commit or deploy unless the user explicitly asks. Finish locally first.
+alwaysApply: true
+---
+
+# Git and deploy
+
+- Do not create git commits unless the user explicitly asks in that message.
+- Do not push, force-push, or amend unless the user explicitly asks.
+- Do not deploy to Firebase, Hosting, Functions, or any production/staging target unless the user explicitly asks. That includes `firebase deploy`, plugin deploy tools, and Secret Manager writes that exist only to ship.
+- Implement and verify locally (emulators, unit tests, lint). Production deploy is a separate step after the full local implementation, not after each phase.

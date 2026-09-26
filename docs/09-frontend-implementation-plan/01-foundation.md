@@ -302,7 +302,9 @@ npx shadcn-vue@2.8.2 add -y button input label textarea field card dialog alert-
   dropdown-menu avatar separator scroll-area resizable tooltip sonner skeleton spinner empty alert collapsible select switch
 ```
 
-- [ ] **Step 4: Self-host the font and add the semantic tokens.** `--font inter` makes the CLI add a Google Fonts `@import url(...)` at the top of `main.css` but never sets `--font-sans`. Remove that import (no third-party request at runtime), install the self-hosted font, and edit `main.css` so it reads exactly:
+> **This step is superseded by [`../12-frontend-design-implementation.md`](../12-frontend-design-implementation.md) §2–§4**: the fonts, full `main.css`, and the shadcn-vue component edits below (steps 4–5) use Geist (not Inter) and the [`../11-design-system.md`](../11-design-system.md) tokens. Follow `12` §2–§4 in place of steps 4–5 here; step 6 (commit) is unchanged.
+
+- [ ] **Step 4 (superseded, kept for context): self-host the font and add the semantic tokens.** `--font inter` makes the CLI add a Google Fonts `@import url(...)` at the top of `main.css` but never sets `--font-sans`. Remove that import (no third-party request at runtime), install the self-hosted font, and edit `main.css` so it reads exactly:
 
 ```bash
 npm install @fontsource-variable/inter@^5.3.0
