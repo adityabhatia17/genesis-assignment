@@ -5,6 +5,7 @@ import { useFirestoreDoc } from '@/composables/useFirestoreDoc';
 import { toUserMessage } from '@/lib/errors';
 import { refs } from '@/services/firestore/paths';
 import { useProjectFiles } from './composables/useProjectFiles';
+import { useGeneration } from './composables/useGeneration';
 import { useWorkspaceStore } from './stores/workspace.store';
 import { provideWorkspace } from './workspace-context';
 import WorkspaceHeader from './WorkspaceHeader.vue';
@@ -27,6 +28,8 @@ provideWorkspace({
   files: files.data,
   filesLoading: files.loading,
 });
+
+useGeneration();
 </script>
 
 <template>

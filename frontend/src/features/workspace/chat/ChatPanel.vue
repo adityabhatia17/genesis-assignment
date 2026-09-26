@@ -1,22 +1,36 @@
 <script setup lang="ts">
 import { useOnline } from '@vueuse/core';
-import { computed, nextTick, ref } from 'vue';
-import { toast } from 'vue-sonner';
+import { storeToRefs } from 'pinia';
+import { computed, ref } from 'vue';
 import { useHighLevelConnection } from '@/features/highlevel/useHighLevelConnection';
 import { useProjectMessages } from '../composables/useProjectMessages';
+import { isActive } from '../stores/generation.reducer';
+import { useGenerationStore } from '../stores/generation.store';
 import { useWorkspaceStore } from '../stores/workspace.store';
 import { useWorkspace } from '../workspace-context';
 import ExamplePrompts from './ExamplePrompts.vue';
+import GenerationOutcomeBanner from './GenerationOutcomeBanner.vue';
+import LiveAssistantMessage from './LiveAssistantMessage.vue';
 import MessageList from './MessageList.vue';
 import PromptComposer from './PromptComposer.vue';
 
 const ws = useWorkspace();
+const generation = useGenerationStore();
 const workspace = useWorkspaceStore();
+const { state } = storeToRefs(generation);
 const { status: hlStatus } = useHighLevelConnection();
 const online = useOnline();
 const { data: messages, loading } = useProjectMessages(ws.uid, ws.projectId);
 const draft = ref('');
 
+const persisted = computed(() =>
+  messages.value.some((m) => m.role === 'assistant' && m.generationId === state.value.generationId),
+);
+const showLive = computed(() => state.value.status !== 'idle' && !persisted.value);
+const busy = computed(() => isActive(state.value.status));
+const liveKey = computed(
+  () => `${state.value.prose.length}:${state.value.fileOrder.length}:${state.value.status}`,
+);
 const empty = computed(
   () => !loading.value && messages.value.length === 0 && ws.files.value.length === 0,
 );
@@ -27,24 +41,25 @@ const blockedReason = computed(() => {
   return null;
 });
 
-function onSubmit(prompt: string): void {
-  void nextTick(() => {
-    draft.value = prompt;
-  });
-  toast.message('Sending a prompt starts with the generation phase.');
+function openFile(path: string): void {
+  workspace.openFile(path);
+  workspace.mobileTab = 'code';
 }
 </script>
 
 <template>
   <section class="flex h-full min-h-0 flex-col" aria-label="Chat">
-    <MessageList :messages="messages" :loading="loading" live-key="idle"> </MessageList>
-    <ExamplePrompts v-if="empty" @pick="draft = $event" />
+    <MessageList :messages="messages" :loading="loading" :live-key="liveKey">
+      <LiveAssistantMessage v-if="showLive" :state="state" @open-file="openFile" />
+    </MessageList>
+    <GenerationOutcomeBanner />
+    <ExamplePrompts v-if="empty && !busy" @pick="draft = $event" />
     <PromptComposer
       v-model="draft"
-      :busy="false"
+      :busy="busy"
       :blocked-reason="blockedReason"
       :hl-connected="hlStatus === 'connected'"
-      @submit="onSubmit"
+      @submit="generation.start($event)"
     />
   </section>
 </template>

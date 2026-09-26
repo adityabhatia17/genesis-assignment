@@ -10,6 +10,7 @@ import ConnectionBadge from '@/features/highlevel/ConnectionBadge.vue';
 import ProjectFormDialog from '@/features/projects/ProjectFormDialog.vue';
 import type { ProjectFormValues } from '@/features/projects/project-form.schema';
 import { updateProject } from '@/services/firestore/projects.repo';
+import GenerationStatusPill from './chat/GenerationStatusPill.vue';
 import { useWorkspaceStore } from './stores/workspace.store';
 import { useWorkspace } from './workspace-context';
 
@@ -44,6 +45,7 @@ async function rename(values: ProjectFormValues): Promise<void> {
         class="size-3.5 shrink-0 text-muted-foreground opacity-0 group-hover:opacity-100"
       />
     </button>
+    <GenerationStatusPill />
     <div class="ml-auto flex items-center gap-2">
       <ConnectionBadge />
       <Button variant="outline" size="sm" @click="workspace.historyOpen = true">
