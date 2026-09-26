@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import PageState from '@/components/common/PageState.vue';
+import AuthForm from './AuthForm.vue';
 </script>
 
 <template>
-  <PageState kind="loading" title="Create account" />
+  <AuthForm mode="sign-up" />
 </template>
