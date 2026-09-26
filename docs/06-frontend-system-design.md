@@ -5,6 +5,7 @@
 **Scope:** Everything under `frontend/`.
 **Contracts:** REST, SSE, bridge, runtime SDK and Firestore schema are canonical in [`07-end-to-end-system-design.md`](07-end-to-end-system-design.md) §3.
 **Plan:** [`09-frontend-implementation-plan/`](09-frontend-implementation-plan/00-overview.md) — its code is verified (typecheck, lint, 90 tests, build); where the plan and this document differ in detail, the plan is current.
+**Visual design:** [`11-design-system.md`](11-design-system.md) (tokens, type, component states) and [`12-frontend-design-implementation.md`](12-frontend-design-implementation.md) (how they're wired into `main.css`, shadcn-vue and Monaco) — this document covers architecture; those cover appearance.
 
 ---
 

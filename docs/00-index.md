@@ -18,9 +18,11 @@ This folder is the complete design and delivery record, written before implement
 | 08  | [Backend implementation plan](08-backend-implementation-plan/00-overview.md)   | build the backend task by task (BE-0 … BE-8) with code, tests, commands, commits                                                                          | implementer                 |
 | 09  | [Frontend implementation plan](09-frontend-implementation-plan/00-overview.md) | build the SPA task by task (FE-0 … FE-8); code verified by typecheck, lint, 90 tests and a production build                                               | implementer                 |
 | 10  | [Delivery: Git, CI/CD, deployment](10-delivery-git-and-deployment.md)          | repo setup, secret hygiene, CI workflow, deploy runbook, smoke checks, README template, Loom script, submission email                                     | Day 5                       |
+| 11  | [Design system](11-design-system.md)                                          | color, type, spacing, radius, component states, copy rules and verified accessibility findings, extracted from the Claude Design UI export                | frontend, design review     |
+| 12  | [Frontend design implementation](12-frontend-design-implementation.md)        | how `11`'s tokens become `main.css`, shadcn-vue edits, the Monaco theme, and the small deltas to the frontend plan's screens                              | implementer                 |
 
 Background research ([`research/`](research/)): [01 assignment deconstruction + traceability matrix](research/01-assignment-deconstruction.md) · [02 HighLevel platform](research/02-highlevel-platform.md) · [03 Firebase platform](research/03-firebase-platform.md) · [04 LLM generation](research/04-llm-generation.md) · [05 frontend stack](research/05-frontend-stack.md).
-Prompts: [Claude Design UI brief](prompts/01-claude-design-genesis-ui.md).
+Prompts: [Claude Design UI brief](prompts/01-claude-design-genesis-ui.md) — its output (the Claude Design export) is extracted into `11`/`12`, not committed as its own folder.
 
 ## How the documents relate
 
@@ -38,6 +40,9 @@ flowchart LR
   P[03 Prerequisites] --> BP
   BP --> D[10 Delivery]
   FP --> D
+  PR[Claude Design prompt] --> DS[11 Design system]
+  DS --> DI[12 Frontend design implementation]
+  DI --> FP
 ```
 
 ## Conventions
