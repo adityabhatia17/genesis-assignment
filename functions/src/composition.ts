@@ -5,11 +5,16 @@ import { sseSmokeRouter } from './http/sse-smoke.routes.js';
 import { connectionRouter } from './modules/highlevel/connection/connection.routes.js';
 import { FirestoreConnectionRepo } from './modules/highlevel/connection/connection.repo.js';
 import { createTokenCipher } from './modules/highlevel/connection/token-cipher.js';
+import { TokenManager } from './modules/highlevel/connection/token-manager.js';
+import { createHlHttpClient } from './modules/highlevel/client/hl-http.client.js';
 import { createLocationLookup } from './modules/highlevel/oauth/location-lookup.js';
 import { oauthAuthedRouter, oauthPublicRouter } from './modules/highlevel/oauth/oauth.routes.js';
 import { OAuthService } from './modules/highlevel/oauth/oauth.service.js';
 import { FirestoreOAuthStateRepo } from './modules/highlevel/oauth/oauth-state.repo.js';
 import { createTokenEndpointClient } from './modules/highlevel/oauth/token-endpoint.client.js';
+import { runtimeRouter } from './modules/highlevel/runtime/runtime.routes.js';
+import { RuntimeService } from './modules/highlevel/runtime/runtime.service.js';
+import { FirestoreProjectAccess } from './modules/projects/project-access.js';
 import { systemClock } from './shared/clock.js';
 import { adminAuth, firestore } from './shared/firebase-admin.js';
 import { createLogger } from './shared/logger.js';
@@ -49,8 +54,29 @@ function buildApiApp(config: RuntimeConfig): Express {
     clock,
     logger,
   });
+  const hl = createHlHttpClient({
+    baseUrl: config.hlApiBaseUrl,
+    logger: logger.child({ component: 'hl' }),
+  });
+  const tokenManager = new TokenManager({
+    repo: connections,
+    tokens: tokenEndpoint,
+    cipher,
+    clock,
+    logger,
+  });
+  const runtime = new RuntimeService({
+    projects: new FirestoreProjectAccess(db),
+    tokens: tokenManager,
+    connections,
+    hl,
+  });
   const publicRouters: Router[] = [oauthPublicRouter(oauth)];
-  const authedRouters: Router[] = [oauthAuthedRouter(oauth), connectionRouter(connections, clock)];
+  const authedRouters: Router[] = [
+    oauthAuthedRouter(oauth),
+    connectionRouter(connections, clock),
+    runtimeRouter(runtime),
+  ];
   return createHttpApp({
     service: 'api',
     version: VERSION,
