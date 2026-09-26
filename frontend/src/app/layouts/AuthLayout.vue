@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import GenesisMark from '@/components/common/GenesisMark.vue';
 import ThemeToggle from '@/components/common/ThemeToggle.vue';
 </script>
 
@@ -10,7 +11,10 @@ import ThemeToggle from '@/components/common/ThemeToggle.vue';
       <ThemeToggle />
     </div>
     <div class="w-full max-w-sm">
-      <p class="mb-8 text-center text-sm font-semibold tracking-tight">Genesis</p>
+      <div class="mb-8 flex items-center justify-center gap-2.5">
+        <GenesisMark />
+        <p class="text-base font-semibold tracking-tight">Genesis</p>
+      </div>
       <slot />
     </div>
   </div>
