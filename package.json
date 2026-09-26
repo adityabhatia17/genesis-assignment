@@ -1,0 +1,19 @@
+{
+  "name": "genesis",
+  "private": true,
+  "type": "module",
+  "engines": { "node": ">=24 <25" },
+  "scripts": {
+    "contracts:sync": "node scripts/sync-contracts.mjs",
+    "contracts:check": "node scripts/sync-contracts.mjs --check",
+    "install:all": "npm ci --prefix functions && npm ci --prefix frontend",
+    "lint": "npm --prefix functions run lint && npm --prefix frontend run lint",
+    "typecheck": "npm --prefix functions run typecheck && npm --prefix frontend run typecheck",
+    "test": "npm --prefix functions test && npm --prefix frontend test",
+    "test:rules": "firebase emulators:exec --project demo-genesis --only firestore \"npm --prefix functions run test:rules\"",
+    "test:integration": "firebase emulators:exec --project demo-genesis --only auth,firestore \"npm --prefix functions run test:integration\"",
+    "build": "npm --prefix functions run build && npm --prefix frontend run build",
+    "emulators": "firebase emulators:start --import ./.emulator-data --export-on-exit",
+    "deploy": "firebase deploy --only functions,hosting,firestore"
+  }
+}

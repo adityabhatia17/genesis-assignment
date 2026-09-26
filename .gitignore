@@ -17,6 +17,7 @@ coverage/
 .env
 .env.*
 !.env.example
+!frontend/.env.production
 *.local
 .secret.local
 !.secret.local.example
@@ -29,3 +30,6 @@ spike-tokens.json
 .idea/
 .vscode/*
 !.vscode/extensions.json
+
+# recorded fixtures before scrubbing
+functions/test/fixtures/hl/raw/

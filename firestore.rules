@@ -1,0 +1,93 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ── helpers ───────────────────────────────────────────────────────────────
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(uid) {
+      return signedIn() && request.auth.uid == uid;
+    }
+
+    // locationId from the server-written connection projection, or null.
+    function connectedLocationId(uid) {
+      let p = /databases/$(database)/documents/users/$(uid)/integrations/highlevel;
+      return exists(p) ? get(p).data.get('locationId', null) : null;
+    }
+
+    function validProjectText(d) {
+      return d.name is string && d.name.size() >= 1 && d.name.size() <= 60
+        && d.description is string && d.description.size() <= 280;
+    }
+
+    function validProjectCreate(uid) {
+      let d = request.resource.data;
+      let fields = ['name', 'description', 'locationId', 'status', 'createdAt', 'updatedAt', 'deletedAt'];
+      return d.keys().hasOnly(fields)
+        && d.keys().hasAll(fields)
+        && validProjectText(d)
+        && d.status == 'active'
+        && d.deletedAt == null
+        && d.createdAt == request.time
+        && d.updatedAt == request.time
+        && (d.locationId == null || d.locationId == connectedLocationId(uid));
+    }
+
+    function validProjectEdit() {
+      let d = request.resource.data;
+      return resource.data.status == 'active'
+        && d.diff(resource.data).affectedKeys().hasOnly(['name', 'description', 'updatedAt'])
+        && validProjectText(d)
+        && d.updatedAt == request.time;
+    }
+
+    function validSoftDelete() {
+      let d = request.resource.data;
+      return resource.data.status == 'active'
+        && d.diff(resource.data).affectedKeys().hasOnly(['status', 'deletedAt', 'updatedAt'])
+        && d.status == 'deleted'
+        && d.deletedAt == request.time
+        && d.updatedAt == request.time
+        && resource.data.get('activeGeneration', null) == null;
+    }
+
+    // ── server-only collections ───────────────────────────────────────────────
+    match /hlConnections/{uid} {
+      allow read, write: if false;   // encrypted HighLevel tokens
+    }
+    match /oauthStates/{stateHash} {
+      allow read, write: if false;
+    }
+    // ── user subtree ─────────────────────────────────────────────────────────
+    match /users/{uid} {
+      allow read, write: if false;   // no user profile document in v1
+
+      match /integrations/{integrationId} {
+        allow read: if isOwner(uid);
+        allow write: if false;
+      }
+
+      // Owner-read for webhook relays (R-B6 out of v1; Admin SDK writes only).
+      match /events/{eventId} {
+        allow read: if isOwner(uid);
+        allow write: if false;
+      }
+
+      match /projects/{projectId} {
+        allow read: if isOwner(uid);
+        allow create: if isOwner(uid) && validProjectCreate(uid);
+        allow update: if isOwner(uid) && (validProjectEdit() || validSoftDelete());
+        allow delete: if false;      // soft delete only
+
+        // files, messages, generations (+ staged, artifacts), snapshots, blobs
+        match /{document=**} {
+          allow read: if isOwner(uid);
+          allow write: if false;
+        }
+      }
+    }
+  }
+}
