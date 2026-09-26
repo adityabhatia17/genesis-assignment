@@ -62,7 +62,7 @@ export const ERROR_CATALOG: Readonly<Record<ErrorCode, ErrorSpec>> = {
   PAYLOAD_TOO_LARGE: { status: 413, retryable: false, message: "That's larger than allowed." },
   PROJECT_NOT_FOUND: { status: 404, retryable: false, message: 'Project not found.' },
   FILE_NOT_FOUND: { status: 404, retryable: false, message: 'File not found.' },
-  SNAPSHOT_NOT_FOUND: { status: 404, retryable: false, message: 'Snapshot not found.' },
+  SNAPSHOT_NOT_FOUND: { status: 404, retryable: false, message: 'History not found.' },
   GENERATION_NOT_FOUND: { status: 404, retryable: false, message: 'Generation not found.' },
   GENERATION_IN_PROGRESS: {
     status: 409,
@@ -78,7 +78,7 @@ export const ERROR_CATALOG: Readonly<Record<ErrorCode, ErrorSpec>> = {
   SNAPSHOT_ALREADY_CURRENT: {
     status: 409,
     retryable: false,
-    message: 'That snapshot is already the current version.',
+    message: 'That history point is already the current version.',
   },
   GENERATION_NOT_APPLYABLE: {
     status: 409,

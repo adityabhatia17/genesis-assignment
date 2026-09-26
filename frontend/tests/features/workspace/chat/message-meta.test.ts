@@ -10,7 +10,7 @@ describe('describeMessageMeta', () => {
         rejectedPaths: ['x.js'],
       }),
     ).toEqual({
-      text: 'Changed index.html, app.js · Snapshot #4 · 1 file rejected',
+      text: 'Changed index.html, app.js · History #4 · 1 file rejected',
       tone: 'warning',
     });
   });
@@ -21,7 +21,7 @@ describe('describeMessageMeta', () => {
         changedPaths: ['a.js', 'b.js', 'c.js', 'd.js'],
         snapshotSeq: 8,
       })?.text,
-    ).toBe('Changed a.js, b.js, c.js +1 more · Snapshot #8');
+    ).toBe('Changed a.js, b.js, c.js +1 more · History #8');
     expect(describeMessageMeta('assistant', { status: 'failed' })).toEqual({
       text: 'Generation failed',
       tone: 'error',

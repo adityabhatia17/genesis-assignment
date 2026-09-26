@@ -25,7 +25,7 @@ describe('buildHistory', () => {
           { changedPaths: ['index.html', 'app.js'], status: 'completed' },
           3,
         ),
-        m('system', 'Restored snapshot #1.', null, null, 4),
+        m('system', 'Restored history #1.', null, null, 4),
         m('user', 'Add search', 'g2', null, 5),
         m('assistant', 'Partial.', 'g2', { status: 'interrupted' }, 6),
         m('user', 'Add search please', 'g3', null, 7), // current generation
@@ -38,7 +38,7 @@ describe('buildHistory', () => {
       { role: 'user', content: 'Add search' },
       { role: 'assistant', content: 'Partial.\n\n[Generation interrupted]' },
     ]);
-    expect(notes).toEqual(['1970-01-01T00:00:00.004Z: Restored snapshot #1.']);
+    expect(notes).toEqual(['1970-01-01T00:00:00.004Z: Restored history #1.']);
   });
 });
 

@@ -224,7 +224,7 @@ export const useGenerationStore = defineStore('generation', () => {
       dispatch({ type: 'partial-applied', result });
       const n = result.appliedPaths.length + result.deletedPaths.length;
       toast.success(
-        `Applied ${n} file change${n === 1 ? '' : 's'} · Snapshot #${result.snapshotSeq}`,
+        `Applied ${n} file change${n === 1 ? '' : 's'} · History #${result.snapshotSeq}`,
       );
     } catch (error) {
       const issues = isApiError(error) ? error.details['issues'] : undefined;

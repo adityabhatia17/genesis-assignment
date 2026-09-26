@@ -90,7 +90,7 @@ const label = computed(() => {
   if (rebuilding.value) return 'Rebuilding…';
   if (!compiled.value.html) return 'Waiting for the first generation';
   const edits = ws.project.value?.workingTreeDirty ? ' + saved edits' : '';
-  return snapshotSeq.value > 0 ? `Live · snapshot #${snapshotSeq.value}${edits}` : `Live${edits}`;
+  return snapshotSeq.value > 0 ? `Live · history #${snapshotSeq.value}${edits}` : `Live${edits}`;
 });
 const mismatch = computed(() => {
   const projectLocation = ws.project.value?.locationId ?? null;

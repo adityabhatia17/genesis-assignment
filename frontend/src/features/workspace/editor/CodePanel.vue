@@ -1,23 +1,23 @@
 <script setup lang="ts">
-import { PanelLeftCloseIcon, PanelLeftOpenIcon } from "@lucide/vue";
-import { storeToRefs } from "pinia";
-import { computed, watch } from "vue";
-import PageState from "@/components/common/PageState.vue";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Button } from "@/components/ui/button";
-import { Switch } from "@/components/ui/switch";
-import { confirmAction } from "@/composables/useConfirm";
-import { useTheme } from "@/composables/useTheme";
-import { useFileSave } from "../composables/useFileSave";
-import { isActive } from "../stores/generation.reducer";
-import { useGenerationStore } from "../stores/generation.store";
-import { useWorkspaceStore } from "../stores/workspace.store";
-import { useWorkspace } from "../workspace-context";
-import CodeEditor from "./CodeEditor.vue";
-import EditorStatusBar from "./EditorStatusBar.vue";
-import EditorTabs from "./EditorTabs.vue";
-import FileTree from "./FileTree.vue";
-import SaveConflictDialog from "./SaveConflictDialog.vue";
+import { PanelLeftCloseIcon, PanelLeftOpenIcon } from '@lucide/vue';
+import { storeToRefs } from 'pinia';
+import { computed, watch } from 'vue';
+import PageState from '@/components/common/PageState.vue';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Button } from '@/components/ui/button';
+import { Switch } from '@/components/ui/switch';
+import { confirmAction } from '@/composables/useConfirm';
+import { useTheme } from '@/composables/useTheme';
+import { useFileSave } from '../composables/useFileSave';
+import { isActive } from '../stores/generation.reducer';
+import { useGenerationStore } from '../stores/generation.store';
+import { useWorkspaceStore } from '../stores/workspace.store';
+import { useWorkspace } from '../workspace-context';
+import CodeEditor from './CodeEditor.vue';
+import EditorStatusBar from './EditorStatusBar.vue';
+import EditorTabs from './EditorTabs.vue';
+import FileTree from './FileTree.vue';
+import SaveConflictDialog from './SaveConflictDialog.vue';
 
 const ws = useWorkspace();
 const workspace = useWorkspaceStore();
@@ -35,23 +35,13 @@ const { resolved } = useTheme();
 const saver = useFileSave();
 
 const readOnly = computed(() => isActive(state.value.status));
-const committed = computed(
-  () => new Map(ws.files.value.map((f) => [f.path, f])),
-);
+const committed = computed(() => new Map(ws.files.value.map((f) => [f.path, f])));
 const uncommitted = computed(() =>
   Object.values(state.value.files)
-    .filter(
-      (f) =>
-        f.op === "write" &&
-        f.status !== "rejected" &&
-        !committed.value.has(f.path),
-    )
+    .filter((f) => f.op === 'write' && f.status !== 'rejected' && !committed.value.has(f.path))
     .map((f) => f.path),
 );
-const treePaths = computed(() => [
-  ...committed.value.keys(),
-  ...uncommitted.value,
-]);
+const treePaths = computed(() => [...committed.value.keys(), ...uncommitted.value]);
 const activeFile = computed(() =>
   activePath.value ? (committed.value.get(activePath.value) ?? null) : null,
 );
@@ -80,7 +70,7 @@ async function closeTab(path: string): Promise<void> {
   if (dirtyPaths.value.includes(path)) {
     const ok = await confirmAction({
       title: `Discard unsaved changes to ${path}?`,
-      confirmLabel: "Discard changes",
+      confirmLabel: 'Discard changes',
       destructive: true,
     });
     if (!ok) return;
@@ -93,10 +83,7 @@ function useLatest(path: string): void {
   saver.useTheirs(path);
 }
 function keepMine(path: string): void {
-  void saver.keepMine(
-    path,
-    ws.models.conflictOf(path)?.version ?? ws.models.baseVersion(path),
-  );
+  void saver.keepMine(path, ws.models.conflictOf(path)?.version ?? ws.models.baseVersion(path));
 }
 </script>
 
@@ -106,6 +93,7 @@ function keepMine(path: string): void {
       <FileTree
         :paths="treePaths"
         :marks="marks"
+        :loading="ws.filesLoading.value"
         @open="workspace.openFile($event)"
       />
     </aside>
@@ -133,22 +121,14 @@ function keepMine(path: string): void {
           v-if="readOnly"
           class="flex shrink-0 items-center gap-1.5 px-3 text-xs text-muted-foreground"
         >
-          <Switch
-            v-model="followGeneration"
-            aria-label="Follow the file being written"
-          />
+          <Switch v-model="followGeneration" aria-label="Follow the file being written" />
           Follow
         </label>
       </div>
-      <Alert
-        v-if="activePath && conflictPaths.includes(activePath)"
-        class="m-2 w-auto"
-      >
+      <Alert v-if="activePath && conflictPaths.includes(activePath)" class="m-2 w-auto">
         <AlertDescription class="flex flex-wrap items-center gap-2">
           This file changed elsewhere while you were editing.
-          <Button size="xs" variant="outline" @click="useLatest(activePath)"
-            >Use the latest</Button
-          >
+          <Button size="xs" variant="outline" @click="useLatest(activePath)">Use the latest</Button>
           <Button size="xs" @click="keepMine(activePath)">Keep mine</Button>
         </AlertDescription>
       </Alert>
@@ -161,6 +141,7 @@ function keepMine(path: string): void {
           :theme="resolved"
           @save="saver.save(activePath)"
         />
+        <PageState v-else-if="ws.filesLoading.value" kind="loading" title="Loading files" />
         <PageState
           v-else
           kind="empty"
