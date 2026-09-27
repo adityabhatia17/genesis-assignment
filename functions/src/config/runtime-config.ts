@@ -106,9 +106,18 @@ export interface Secrets {
 
 export function loadSecrets(opts: { anthropic: boolean }): Secrets {
   return Object.freeze({
-    anthropicApiKey: opts.anthropic ? p.ANTHROPIC_API_KEY.value() : null,
+    anthropicApiKey: opts.anthropic ? p.ANTHROPIC_API_KEY.value().trim() || null : null,
     hlClientId: p.HL_CLIENT_ID.value(),
     hlClientSecret: p.HL_CLIENT_SECRET.value(),
     tokenEncryptionKey: p.TOKEN_ENCRYPTION_KEY.value(),
   });
+}
+
+/** Why generation cannot run with this model setup, or null when it can. */
+export function modelConfigError(
+  config: Pick<RuntimeConfig, 'llmProvider'>,
+  secrets: Pick<Secrets, 'anthropicApiKey'>,
+): string | null {
+  if (config.llmProvider === 'fake' || secrets.anthropicApiKey) return null;
+  return 'ANTHROPIC_API_KEY is empty. Set it in functions/.secret.local (emulators) or Secret Manager, or set LLM_PROVIDER=fake to use the scripted model.';
 }

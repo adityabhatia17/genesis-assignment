@@ -287,20 +287,9 @@ Design docs: `docs/00-index.md` (analysis, HLD, backend/frontend/end-to-end desi
 
 ## Local development
 
-Requirements: Node 24, Java 21 (emulators), Firebase CLI 15.
+Requirements: Node 24, Java 21 (emulators), Firebase CLI 15. The emulators run as the offline project `demo-genesis`; the step-by-step setup (env files, emulator values, the PIT seed for real HighLevel data) is in the [README](../README.md#local-setup).
 
-```bash
-npm run install:all
-cp .env.example functions/.env.local            # keep LLM_PROVIDER=fake to work without an API key
-cp functions/.secret.local.example functions/.secret.local   # fill TOKEN_ENCRYPTION_KEY (openssl rand -base64 32)
-cp frontend/.env.example frontend/.env.local     # use the emulator values from docs/09-frontend-implementation-plan/01-foundation.md FE-0.4
-npm run contracts:sync
-npm run emulators                                 # auth, firestore, functions, UI on :4000
-npm --prefix frontend run dev                     # http://localhost:5173
-```
-
-Real HighLevel data locally (emulator only): sign up in the local app, copy your uid from the Emulator UI, then
-`FIRESTORE_EMULATOR_HOST=127.0.0.1:8080 HL_PIT=<private integration token> HL_LOCATION_ID=<location> FIREBASE_UID=<uid> TOKEN_ENCRYPTION_KEY=<same as .secret.local> npm --prefix functions run seed:pit`. Real Claude locally: set `LLM_PROVIDER=anthropic` and `ANTHROPIC_API_KEY` in `functions/.secret.local`.
+**Model switch:** `LLM_PROVIDER` in `functions/.env.local`. `anthropic` (the default) calls Claude and needs `ANTHROPIC_API_KEY` in `functions/.secret.local`; if the key is empty, generation answers `GENERATION_DISABLED` and the log shows `generate.model_not_configured`. `fake` runs the scripted provider offline.
 
 Tests: `npm test` (unit), `npm run test:rules`, `npm run test:integration` (emulators).
 

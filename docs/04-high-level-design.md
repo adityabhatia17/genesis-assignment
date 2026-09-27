@@ -219,8 +219,8 @@ Each answer: **Decision · Why · Rejected · Trade-offs · Interview line.**
 
 ### Q19. How can it be developed and demoed locally without paid keys?
 
-- **Decision:** Emulator Suite (Auth, Firestore, Functions) + `LLM_PROVIDER=fake` (a scripted provider streaming realistic generations, including failure scripts) + a script that seeds an emulator HighLevel connection from a sub-account **Private Integration Token**.
-- **Why:** Reviewers run `firebase emulators:start` (R-DEL2); tests need deterministic streams; OAuth redirects to localhost may be refused.
+- **Decision:** Emulator Suite (Auth, Firestore, Functions) + a model switch, `LLM_PROVIDER`: `anthropic` (the default, locally too) calls Claude with a key from `functions/.secret.local`, and `fake` swaps in a scripted provider streaming realistic generations, including failure scripts + a script that seeds an emulator HighLevel connection from a sub-account **Private Integration Token**.
+- **Why:** Reviewers run `firebase emulators:start` (R-DEL2) and should see real output by default; without a key the switch keeps the whole flow runnable; tests need deterministic streams; OAuth redirects to localhost may be refused.
 
 ### Q20. How does this map to a real HighLevel marketplace app?
 

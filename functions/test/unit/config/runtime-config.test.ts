@@ -1,4 +1,4 @@
-import { parseRuntimeConfig } from '../../../src/config/runtime-config.js';
+import { modelConfigError, parseRuntimeConfig } from '../../../src/config/runtime-config.js';
 
 const raw = {
   APP_BASE_URL: 'https://x.web.app',
@@ -47,5 +47,17 @@ describe('parseRuntimeConfig', () => {
   });
   it('rejects unknown effort', () => {
     expect(() => parseRuntimeConfig({ ...raw, ANTHROPIC_EFFORT: 'ultra' })).toThrow();
+  });
+});
+
+describe('modelConfigError', () => {
+  it('needs an API key only while LLM_PROVIDER=anthropic', () => {
+    expect(modelConfigError({ llmProvider: 'anthropic' }, { anthropicApiKey: null })).toMatch(
+      /ANTHROPIC_API_KEY.*LLM_PROVIDER=fake/,
+    );
+    expect(
+      modelConfigError({ llmProvider: 'anthropic' }, { anthropicApiKey: 'sk-ant-test' }),
+    ).toBeNull();
+    expect(modelConfigError({ llmProvider: 'fake' }, { anthropicApiKey: null })).toBeNull();
   });
 });

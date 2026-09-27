@@ -1,6 +1,11 @@
 import Anthropic from '@anthropic-ai/sdk';
 import type { Express, Router } from 'express';
-import { loadRuntimeConfig, loadSecrets, type RuntimeConfig } from './config/runtime-config.js';
+import {
+  loadRuntimeConfig,
+  loadSecrets,
+  modelConfigError,
+  type RuntimeConfig,
+} from './config/runtime-config.js';
 import { LIMITS } from './contracts/limits.js';
 import { createHttpApp } from './http/create-http-app.js';
 import { sseSmokeRouter } from './http/sse-smoke.routes.js';
@@ -120,6 +125,9 @@ function buildGenerateApp(config: RuntimeConfig): Express {
   const db = firestore();
   const clock = systemClock;
   const secrets = loadSecrets({ anthropic: config.llmProvider === 'anthropic' });
+  // Without a model, generation answers GENERATION_DISABLED instead of failing each run.
+  const modelError = modelConfigError(config, secrets);
+  if (modelError) logger.error('generate.model_not_configured', { reason: modelError });
   const cipher = createTokenCipher(secrets.tokenEncryptionKey);
   const connections = new FirestoreConnectionRepo(db);
   const tokenEndpoint = createTokenEndpointClient({
@@ -171,7 +179,7 @@ function buildGenerateApp(config: RuntimeConfig): Express {
     generationRouter({
       orchestrator,
       limiter: new FirestoreRateLimiter(db, clock),
-      generationEnabled: config.generationEnabled,
+      generationEnabled: config.generationEnabled && !modelError,
       generationDailyGlobalCap: config.generationDailyGlobalCap,
     }),
   ];
