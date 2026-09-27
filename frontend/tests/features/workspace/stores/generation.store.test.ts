@@ -1,4 +1,5 @@
 import { createPinia, setActivePinia } from 'pinia';
+import { toast } from 'vue-sonner';
 import type { GenerationEvent } from '@/contracts/sse';
 import { ApiError } from '@/lib/http';
 import type { GenerationSnapshot } from '@/features/workspace/stores/generation.reducer';
@@ -7,6 +8,7 @@ import { events, FAILED_WITH_PARTIAL, HAPPY } from '../../../fixtures/sse';
 const stream = vi.fn();
 const apply = vi.fn();
 const discard = vi.fn();
+const cancel = vi.fn();
 let watcher: {
   next(s: GenerationSnapshot | null): void;
   error(e: Error): void;
@@ -22,6 +24,7 @@ vi.mock('@/services/api/generation-stream', () => ({
 vi.mock('@/services/api/generations.api', () => ({
   applyGeneration: (...a: unknown[]) => apply(...a) as unknown,
   discardGeneration: (...a: unknown[]) => discard(...a) as unknown,
+  cancelGeneration: (...a: unknown[]) => cancel(...a) as unknown,
 }));
 vi.mock('@/services/firestore/generations.repo', () => ({
   watchGeneration: (_u: string, _p: string, _g: string, w: typeof watcher) => {
@@ -136,6 +139,47 @@ describe('generation store', () => {
       partial: null,
       result: { snapshotSeq: 5 },
     });
+  });
+
+  it('requests cancel without closing the stream', async () => {
+    const store = useGenerationStore();
+    store.bindProject('u1', 'p1');
+    let signal: AbortSignal | undefined;
+    stream.mockImplementationOnce((o: StreamArgs) => {
+      signal = o.signal;
+      o.onEvent(events('g1', HAPPY)[0]!);
+      return new Promise(() => undefined);
+    });
+    void store.start('Build it');
+    await vi.waitFor(() => expect(store.state.status).toBe('streaming'));
+    cancel.mockResolvedValueOnce({ cancelled: true });
+    await store.cancel();
+    expect(cancel).toHaveBeenCalledWith('p1', 'g1');
+    expect(signal?.aborted).toBe(false);
+    expect(store.state.status).toBe('cancelling');
+  });
+
+  it('stays quiet when Stop races a generation that already finished', async () => {
+    vi.mocked(toast.error).mockClear();
+    const store = useGenerationStore();
+    store.bindProject('u1', 'p1');
+    stream.mockImplementationOnce((o: StreamArgs) => {
+      o.onEvent(events('g1', HAPPY)[0]!);
+      return new Promise(() => undefined);
+    });
+    void store.start('Build it');
+    await vi.waitFor(() => expect(store.state.status).toBe('streaming'));
+    cancel.mockRejectedValueOnce(
+      new ApiError({
+        code: 'GENERATION_NOT_CANCELLABLE',
+        message: 'This generation is no longer running.',
+        status: 409,
+        retryable: false,
+      }),
+    );
+    await store.cancel();
+    expect(toast.error).not.toHaveBeenCalled();
+    expect(store.state.status).toBe('streaming');
   });
 
   it('hydrates only running or unresolved generations', () => {

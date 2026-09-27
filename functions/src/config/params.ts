@@ -34,5 +34,9 @@ export const ANTHROPIC_EFFORT = defineString('ANTHROPIC_EFFORT', { default: 'med
 export const ANTHROPIC_WORKSPACE_ID = defineString('ANTHROPIC_WORKSPACE_ID', { default: '' });
 export const LLM_PROVIDER = defineString('LLM_PROVIDER', { default: 'anthropic' });
 export const SSE_SMOKE_ENABLED = defineString('SSE_SMOKE_ENABLED', { default: 'false' });
+export const GENERATION_ENABLED = defineString('GENERATION_ENABLED', { default: 'true' });
+export const GENERATION_DAILY_GLOBAL_CAP = defineInt('GENERATION_DAILY_GLOBAL_CAP', {
+  default: 200,
+});
 export const API_MIN_INSTANCES = defineInt('API_MIN_INSTANCES', { default: 0 });
 export const GENERATE_MIN_INSTANCES = defineInt('GENERATE_MIN_INSTANCES', { default: 0 });

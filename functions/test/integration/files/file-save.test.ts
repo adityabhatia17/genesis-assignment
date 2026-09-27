@@ -37,14 +37,31 @@ async function seed(pid: string, project: Record<string, unknown> = {}) {
 }
 
 describe('FileSaveService', () => {
-  it('saves with the expected version, bumps version and marks the tree dirty', async () => {
-    await seed('p1');
-    const r = await svc.save('u', 'p1', FID, 'var a = 1;', 3);
+  it('saves with the expected version and adds a checkpoint to history', async () => {
+    const pid = `psave${Date.now()}`;
+    await seed(pid, { snapshotSeq: 2, latestSnapshotId: null });
+    const r = await svc.save('u', pid, FID, 'var a = 1;', 3);
     expect(r).toMatchObject({ fileId: FID, path: 'app.js', version: 4, sizeBytes: 10 });
-    const p = await db.doc('users/u/projects/p1').get();
-    expect(p.get('workingTreeDirty')).toBe(true);
+    const p = await db.doc(`users/u/projects/${pid}`).get();
+    expect(p.get('workingTreeDirty')).toBe(false);
+    expect(p.get('snapshotSeq')).toBe(3);
     expect(p.get('totalBytes')).toBe(10);
-    expect((await db.doc(`users/u/projects/p1/files/${FID}`).get()).get('source')).toBe('manual');
+    expect((await db.doc(`users/u/projects/${pid}/files/${FID}`).get()).get('source')).toBe(
+      'manual',
+    );
+    const snap = await db
+      .doc(`users/u/projects/${pid}/snapshots/${p.get('latestSnapshotId')}`)
+      .get();
+    expect(snap.data()).toMatchObject({
+      seq: 3,
+      kind: 'checkpoint',
+      label: 'Checkpoint: Saved app.js',
+      changedPaths: ['app.js'],
+      parentSnapshotId: null,
+    });
+    expect(
+      (await db.doc(`users/u/projects/${pid}/blobs/${r.contentHash}`).get()).get('content'),
+    ).toBe('var a = 1;');
   });
   it('rejects a stale version with the current version in details', async () => {
     await seed('p2');

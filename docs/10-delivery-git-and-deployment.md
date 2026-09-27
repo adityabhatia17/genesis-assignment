@@ -108,12 +108,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v7
-        with:
-          {
-            node-version: 24,
-            cache: npm,
-            cache-dependency-path: functions/package-lock.json,
-          }
+        with: { node-version: 24, cache: npm, cache-dependency-path: functions/package-lock.json }
       - run: npm ci
       - run: npm run lint
       - run: npm run typecheck
@@ -128,12 +123,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v7
-        with:
-          {
-            node-version: 24,
-            cache: npm,
-            cache-dependency-path: functions/package-lock.json,
-          }
+        with: { node-version: 24, cache: npm, cache-dependency-path: functions/package-lock.json }
       - uses: actions/setup-java@v6
         with: { distribution: temurin, java-version: 21 }
       - run: npm i -g firebase-tools@15
@@ -149,12 +139,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v7
-        with:
-          {
-            node-version: 24,
-            cache: npm,
-            cache-dependency-path: frontend/package-lock.json,
-          }
+        with: { node-version: 24, cache: npm, cache-dependency-path: frontend/package-lock.json }
       - run: npm ci
       - run: npm run lint
       - run: npm run typecheck
@@ -232,11 +217,16 @@ firebase deploy --only functions
 firebase deploy --only hosting          # predeploy builds frontend/ with .env.production
 ```
 
-After the first functions deploy: HighLevel app → Advanced settings → Redirect URL = `https://us-central1-<projectId>.cloudfunctions.net/api/v1/hl/oauth/callback` (exact match; R-DEP3). Create the Firestore TTL policies if not done (BE-2.2). Set the Anthropic console spend limit and the GCP budget alert (prerequisites §4, §3).
+After the first functions deploy: HighLevel app → Advanced settings → Redirect URL = `https://us-central1-<projectId>.cloudfunctions.net/api/v1/hl/oauth/callback` (exact match; R-DEP3). Webhook URL = `https://us-central1-<projectId>.cloudfunctions.net/hlWebhook`, with Contact*, Appointment*, InboundMessage, and OutboundMessage enabled. Create the Firestore TTL policies if not done (BE-2.2, plus `expiresAt` on collection groups `webhookEvents` and `events`). Set the Anthropic console spend limit and the GCP budget alert (prerequisites §4, §3).
+
+```bash
+gcloud firestore fields ttls update expiresAt --collection-group=webhookEvents --enable-ttl --project=<projectId>
+gcloud firestore fields ttls update expiresAt --collection-group=events --enable-ttl --project=<projectId>
+```
 
 ## 6. Post-deploy smoke checklist
 
-Run **BE-8.6 Step 5** (backend, 11 checks) and **FE-8.6 Step 3** (frontend, 7 checks) against production, then the full Loom path once (§8) with the reviewer demo account. Tag when all pass:
+Run **BE-8.6 Step 5** (backend, 11 checks) and **FE-8.6 Step 3** (frontend, 7 checks) against production, then the bonus checks: Stop mid-generation (`cancelled` plus Apply/Discard when files finished), the 11th generation in 10 minutes returns 429, History → View changes, Load more on a generated contacts list, and a sandbox contact create shows `webhook.delivered` and refreshes the preview. `GENERATION_ENABLED=false` returns 503; set it back to `true`. Then the full Loom path once (§8) with the reviewer demo account. Tag when all pass:
 
 ```bash
 git tag -a v1.0.0 -m "Genesis submission"
@@ -392,7 +382,7 @@ Aditya
 | 4        | BE-7, BE-8                   | FE-5, FE-6, FE-7 | Full Loom path works on prod                              |
 | 5        | —                            | FE-8             | README, Loom, gitleaks, tag, email                        |
 
-Assignment bonuses (cancel, diff, in-app rate limits, Load more, webhooks), HighLevel writes/free slots, evals, Anthropic fast mode, and Playwright are out of this submission. Never cut: streaming, preview with real data, snapshots/restore, disconnection handling, README, Loom.
+Assignment bonuses (cancel, diff, in-app rate limits, Load more, webhooks) are in this submission. HighLevel writes/free slots, evals, Anthropic fast mode, and Playwright stay out. Never cut: streaming, preview with real data, snapshots/restore, disconnection handling, README, Loom.
 
 ## 11. Final checklist
 

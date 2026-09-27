@@ -5,6 +5,7 @@ import request from 'supertest';
 import { createHttpApp } from '../../src/http/create-http-app.js';
 import { ContextBuilder } from '../../src/modules/generation/context/context-builder.js';
 import { generationRouter } from '../../src/modules/generation/generate.app.js';
+import { MemoryRateLimiter } from '../../src/modules/rate-limit/rate-limiter.js';
 import { FakeProvider } from '../../src/modules/generation/llm/fake.provider.js';
 import { GenerationOrchestrator } from '../../src/modules/generation/orchestrator.js';
 import { CommitService } from '../../src/modules/generation/persistence/commit.service.js';
@@ -72,7 +73,14 @@ export function makeApps(opts: { deadlineMs?: number; chunkDelayMs?: number } = 
   const generate = createHttpApp({
     ...common,
     service: 'generate',
-    authedRouters: [generationRouter({ orchestrator })],
+    authedRouters: [
+      generationRouter({
+        orchestrator,
+        limiter: new MemoryRateLimiter(systemClock),
+        generationEnabled: true,
+        generationDailyGlobalCap: 200,
+      }),
+    ],
   });
   const api = createHttpApp({
     ...common,

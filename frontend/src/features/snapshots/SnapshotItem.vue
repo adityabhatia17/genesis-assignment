@@ -13,7 +13,7 @@ const props = defineProps<{
   dirtySinceCurrent: boolean;
   restoreDisabled: boolean;
 }>();
-const emit = defineEmits<{ restore: [] }>();
+const emit = defineEmits<{ restore: []; view: [] }>();
 
 const KIND_LABEL = {
   generation: 'AI',
@@ -42,6 +42,7 @@ const changed = computed(
       <template v-if="props.current && props.dirtySinceCurrent"> · saved edits since</template>
     </p>
     <div class="flex gap-2">
+      <Button size="xs" variant="outline" @click="emit('view')">View changes</Button>
       <Button
         size="xs"
         variant="outline"

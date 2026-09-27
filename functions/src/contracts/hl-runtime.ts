@@ -12,8 +12,17 @@ export const HL_SCOPES = [
   'locations.readonly',
 ] as const;
 
-/** Out of v1 (R-B6). Webhook event names the preview host may push. */
-export const RUNTIME_EVENT_NAMES = [] as const;
+/** HighLevel webhook names the preview may deliver to `genesis.on`. */
+export const RUNTIME_EVENT_NAMES = [
+  'contact.created',
+  'contact.updated',
+  'contact.deleted',
+  'appointment.created',
+  'appointment.updated',
+  'appointment.deleted',
+  'message.inbound',
+  'message.outbound',
+] as const;
 export type RuntimeEventName = (typeof RUNTIME_EVENT_NAMES)[number];
 
 // ── Models (what generated code receives) ────────────────────────────────────
@@ -103,8 +112,17 @@ export interface ItemsResult<T> {
 }
 
 // ── Params (what generated code sends) ───────────────────────────────────────
-const HlId = z.string().min(1).max(128).regex(/^[A-Za-z0-9_-]+$/, 'Invalid id');
-const Limit = z.coerce.number().int().min(1).max(LIMITS.pageLimitMax).default(LIMITS.pageLimitDefault);
+const HlId = z
+  .string()
+  .min(1)
+  .max(128)
+  .regex(/^[A-Za-z0-9_-]+$/, 'Invalid id');
+const Limit = z.coerce
+  .number()
+  .int()
+  .min(1)
+  .max(LIMITS.pageLimitMax)
+  .default(LIMITS.pageLimitDefault);
 const Cursor = z.string().min(1).max(2_048);
 const Query = z.string().trim().max(200);
 const IsoDateTime = z.iso.datetime({ offset: true });
@@ -123,7 +141,11 @@ const contactFields = {
   firstName: z.string().trim().min(1).max(100).optional(),
   lastName: z.string().trim().min(1).max(100).optional(),
   email: z.email().max(254).optional(),
-  phone: z.string().trim().regex(/^[+0-9 ()-]{3,32}$/, 'Invalid phone').optional(),
+  phone: z
+    .string()
+    .trim()
+    .regex(/^[+0-9 ()-]{3,32}$/, 'Invalid phone')
+    .optional(),
   companyName: z.string().trim().min(1).max(200).optional(),
   tags: z.array(z.string().trim().min(1).max(100)).max(20).optional(),
 };
@@ -137,13 +159,14 @@ export const ContactsListParams = z.strictObject({
 export const ContactGetParams = z.strictObject({ contactId: HlId });
 export const ContactCreateParams = z
   .strictObject(contactFields)
-  .refine((v) => Object.values(v).some((x) => x !== undefined), { message: 'Provide at least one field' });
+  .refine((v) => Object.values(v).some((x) => x !== undefined), {
+    message: 'Provide at least one field',
+  });
 export const ContactUpdateParams = z
   .strictObject({ contactId: HlId, ...contactFields })
-  .refine(
-    ({ contactId: _id, ...rest }) => Object.values(rest).some((x) => x !== undefined),
-    { message: 'Provide at least one field to update' },
-  );
+  .refine(({ contactId: _id, ...rest }) => Object.values(rest).some((x) => x !== undefined), {
+    message: 'Provide at least one field to update',
+  });
 export const ConversationsListParams = z.strictObject({
   query: Query.optional(),
   contactId: HlId.optional(),
@@ -251,12 +274,20 @@ export const RUNTIME_METHODS = {
   },
 } as const satisfies Record<RuntimeMethodName, RuntimeMethodSpec>;
 
-export type RuntimeParams<M extends RuntimeMethodName> = z.input<(typeof RUNTIME_METHODS)[M]['params']>;
-export type RuntimeParsedParams<M extends RuntimeMethodName> = z.output<(typeof RUNTIME_METHODS)[M]['params']>;
+export type RuntimeParams<M extends RuntimeMethodName> = z.input<
+  (typeof RUNTIME_METHODS)[M]['params']
+>;
+export type RuntimeParsedParams<M extends RuntimeMethodName> = z.output<
+  (typeof RUNTIME_METHODS)[M]['params']
+>;
 
 /** OAuth scopes the given methods need, deduplicated, in HL_SCOPES order. */
-export const scopesForMethods = (methods: readonly RuntimeMethodName[]): (typeof HL_SCOPES)[number][] => {
-  const needed = new Set<(typeof HL_SCOPES)[number]>(methods.flatMap((m) => RUNTIME_METHODS[m].scopes));
+export const scopesForMethods = (
+  methods: readonly RuntimeMethodName[],
+): (typeof HL_SCOPES)[number][] => {
+  const needed = new Set<(typeof HL_SCOPES)[number]>(
+    methods.flatMap((m) => RUNTIME_METHODS[m].scopes),
+  );
   return HL_SCOPES.filter((s) => needed.has(s));
 };
 

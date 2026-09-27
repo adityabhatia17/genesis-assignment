@@ -10,6 +10,7 @@ import type { PreviewContext } from '@/contracts/bridge';
 import { useHighLevelConnection } from '@/features/highlevel/useHighLevelConnection';
 import { newNonce } from '@/lib/ids';
 import { invokeRuntime } from '@/services/api/hl-runtime.api';
+import { usePreviewEvents } from '../composables/usePreviewEvents';
 import { useWorkspaceStore } from '../stores/workspace.store';
 import { useWorkspace } from '../workspace-context';
 import { compilePreview } from './compile-preview';
@@ -48,12 +49,15 @@ function context(): PreviewContext {
   };
 }
 
+let flushEvents = (): void => undefined;
 const bridge = new PreviewHostBridge({
   getContext: context,
   invoke: (method, params, signal) => invokeRuntime(ws.projectId, method, params, signal),
   onLog: (entry) => (logs.value = [...logs.value, entry].slice(-MAX_LOGS)),
   onCall: (call) => (calls.value = [...calls.value, call].slice(-MAX_CALLS)),
+  onPort: () => flushEvents(),
 });
+flushEvents = usePreviewEvents(bridge);
 
 // Only committed files feed the preview: it rebuilds after a generation commit, a save or a
 // restore — never while tokens stream or from unsaved buffers (R-FE5).

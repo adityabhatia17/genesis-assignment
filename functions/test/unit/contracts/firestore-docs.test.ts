@@ -1,4 +1,8 @@
-import { IssueSchema, TERMINAL_GENERATION_STATUSES, UsageSchema } from '../../../src/contracts/firestore-docs.js';
+import {
+  IssueSchema,
+  TERMINAL_GENERATION_STATUSES,
+  UsageSchema,
+} from '../../../src/contracts/firestore-docs.js';
 
 describe('firestore doc contracts', () => {
   it('validates issues and usage', () => {
@@ -24,6 +28,11 @@ describe('firestore doc contracts', () => {
     ).toBeTruthy();
   });
   it('lists terminal statuses', () => {
-    expect(TERMINAL_GENERATION_STATUSES).toEqual(['completed', 'failed', 'interrupted']);
+    expect(TERMINAL_GENERATION_STATUSES).toEqual([
+      'completed',
+      'failed',
+      'interrupted',
+      'cancelled',
+    ]);
   });
 });

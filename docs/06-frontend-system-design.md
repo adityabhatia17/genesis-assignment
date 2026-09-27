@@ -218,7 +218,7 @@ IIFE that: installs in-memory `localStorage`/`sessionStorage` shims; mirrors `co
 
 ### 14.1 History sheet
 
-`SnapshotHistorySheet.vue` (`Sheet side="right"`): `useSnapshots(projectId)` listens (while open) to the last 50 snapshots by `seq desc`. `SnapshotItem.vue`: `#seq` badge, kind badge (AI / Checkpoint / Restore), label (prompt excerpt or "Restored #n"), relative time with absolute `Tooltip`, "n files changed", "Current" badge for `latestSnapshotId` (plus "Unsaved edits since #n" when `workingTreeDirty`); action **Restore**. Snapshot diff (assignment bonus R-B3) is out of v1.
+`SnapshotHistorySheet.vue` (`Sheet side="right"`): `useSnapshots(projectId)` listens (while open) to the last 50 snapshots by `seq desc`. `SnapshotItem.vue`: `#seq` badge, kind badge (AI / Checkpoint / Restore), label (prompt excerpt or "Restored #n"), relative time with absolute `Tooltip`, "n files changed", "Current" badge for `latestSnapshotId` (plus "Unsaved edits since #n" when `workingTreeDirty`); action **Restore** and **View changes** (R-B3 side-by-side diff against the parent snapshot, or against the saved working tree). Stop is enabled once a generation is `streaming` or `reconciling`. The preview relays `users/{uid}/events` into `genesis.on` for the project's location.
 
 ### 14.2 Restore
 

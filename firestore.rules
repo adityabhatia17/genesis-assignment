@@ -70,7 +70,7 @@ service cloud.firestore {
         allow write: if false;
       }
 
-      // Owner-read for webhook relays (R-B6 out of v1; Admin SDK writes only).
+      // Owner-read webhook relays. Admin SDK writes only.
       match /events/{eventId} {
         allow read: if isOwner(uid);
         allow write: if false;

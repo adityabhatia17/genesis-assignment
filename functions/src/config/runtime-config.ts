@@ -30,6 +30,11 @@ const RawSchema = z.object({
   ANTHROPIC_WORKSPACE_ID: z.string().default(''),
   LLM_PROVIDER: z.enum(['anthropic', 'fake']),
   SSE_SMOKE_ENABLED: bool,
+  GENERATION_ENABLED: z
+    .enum(['true', 'false'])
+    .default('true')
+    .transform((v) => v === 'true'),
+  GENERATION_DAILY_GLOBAL_CAP: z.coerce.number().int().nonnegative().default(200),
 });
 
 export interface RuntimeConfig {
@@ -44,6 +49,8 @@ export interface RuntimeConfig {
   readonly anthropicWorkspaceId: string;
   readonly llmProvider: 'anthropic' | 'fake';
   readonly sseSmokeEnabled: boolean;
+  readonly generationEnabled: boolean;
+  readonly generationDailyGlobalCap: number;
   /** Out of v1 (R-B). Always false. */
   readonly anthropicFastMode: false;
   /** Out of v1. Always false. */
@@ -64,6 +71,8 @@ export function parseRuntimeConfig(raw: Record<string, unknown>): RuntimeConfig 
     anthropicWorkspaceId: r.ANTHROPIC_WORKSPACE_ID,
     llmProvider: r.LLM_PROVIDER,
     sseSmokeEnabled: r.SSE_SMOKE_ENABLED,
+    generationEnabled: r.GENERATION_ENABLED,
+    generationDailyGlobalCap: r.GENERATION_DAILY_GLOBAL_CAP,
     anthropicFastMode: false,
     hlExtendedMethods: false,
   });
@@ -83,6 +92,8 @@ export function loadRuntimeConfig(): RuntimeConfig {
     ANTHROPIC_WORKSPACE_ID: p.ANTHROPIC_WORKSPACE_ID.value(),
     LLM_PROVIDER: p.LLM_PROVIDER.value(),
     SSE_SMOKE_ENABLED: p.SSE_SMOKE_ENABLED.value(),
+    GENERATION_ENABLED: p.GENERATION_ENABLED.value(),
+    GENERATION_DAILY_GLOBAL_CAP: p.GENERATION_DAILY_GLOBAL_CAP.value(),
   });
 }
 

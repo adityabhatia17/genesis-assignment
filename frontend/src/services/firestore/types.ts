@@ -7,6 +7,7 @@ import type {
   MessageDoc,
   ProjectDoc,
   SnapshotDoc,
+  UserEventDoc,
 } from '@/contracts/firestore-docs';
 
 export type WithId<T> = T & { readonly id: string };
@@ -18,3 +19,4 @@ export type ChatMessage = WithId<MessageDoc<Timestamp>>;
 export type Generation = WithId<GenerationDoc<Timestamp>>;
 export type Snapshot = WithId<SnapshotDoc<Timestamp>>;
 export type BlobRecord = WithId<BlobDoc<Timestamp>>;
+export type UserEvent = WithId<UserEventDoc<Timestamp>>;

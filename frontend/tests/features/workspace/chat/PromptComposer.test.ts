@@ -32,11 +32,29 @@ describe('PromptComposer', () => {
     expect(send.attributes('disabled')).toBeDefined();
   });
 
-  it('disables Send while generating', () => {
+  it('shows Stop while generating and emits cancel', async () => {
     const wrapper = mount(PromptComposer, {
-      props: { ...props, busy: true, modelValue: 'hi' },
+      props: { ...props, busy: true, canCancel: true, modelValue: 'hi' },
     });
-    const send = wrapper.findAll('button').find((b) => b.text().includes('Send'));
-    expect(send?.attributes('disabled')).toBeDefined();
+    const stop = wrapper.findAll('button').find((b) => b.text().includes('Stop'))!;
+    expect(stop.attributes('disabled')).toBeUndefined();
+    await stop.trigger('click');
+    expect(wrapper.emitted('cancel')).toHaveLength(1);
+    await wrapper.setProps({ cancelling: true });
+    expect(wrapper.text()).toContain('Stopping…');
+    expect(
+      wrapper
+        .findAll('button')
+        .find((b) => b.text().includes('Stopping'))!
+        .attributes('disabled'),
+    ).toBeDefined();
+  });
+
+  it('disables Stop until the stream has started', () => {
+    const wrapper = mount(PromptComposer, {
+      props: { ...props, busy: true, canCancel: false, modelValue: 'hi' },
+    });
+    const stop = wrapper.findAll('button').find((b) => b.text().includes('Stop'))!;
+    expect(stop.attributes('disabled')).toBeDefined();
   });
 });

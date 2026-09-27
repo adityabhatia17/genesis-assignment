@@ -5,7 +5,13 @@ import { FileLanguageSchema } from './paths.js';
 
 export const SSE_PROTOCOL_VERSION = 1 as const;
 
-export const GenerationPhaseSchema = z.enum(['context', 'thinking', 'writing', 'validating', 'committing']);
+export const GenerationPhaseSchema = z.enum([
+  'context',
+  'thinking',
+  'writing',
+  'validating',
+  'committing',
+]);
 export type GenerationPhase = z.infer<typeof GenerationPhaseSchema>;
 
 const envelope = <T extends string, D extends z.ZodType>(type: T, data: D) =>
@@ -23,12 +29,20 @@ const RejectedFile = z.object({ path: z.string(), issues: z.array(IssueSchema) }
 export const GenerationEventSchema = z.discriminatedUnion('type', [
   envelope(
     'generation.started',
-    z.object({ projectId: z.string(), model: z.string(), promptVersion: z.string(), startedAt: z.string() }),
+    z.object({
+      projectId: z.string(),
+      model: z.string(),
+      promptVersion: z.string(),
+      startedAt: z.string(),
+    }),
   ),
   envelope('generation.phase', z.object({ phase: GenerationPhaseSchema })),
   envelope('assistant.thinking', z.object({ text: z.string() })),
   envelope('assistant.delta', z.object({ text: z.string() })),
-  envelope('file.started', z.object({ path: z.string(), language: FileLanguageSchema, op: z.literal('write') })),
+  envelope(
+    'file.started',
+    z.object({ path: z.string(), language: FileLanguageSchema, op: z.literal('write') }),
+  ),
   envelope('file.delta', z.object({ path: z.string(), text: z.string() })),
   envelope(
     'file.completed',
@@ -42,7 +56,11 @@ export const GenerationEventSchema = z.discriminatedUnion('type', [
   ),
   envelope(
     'file.deleted',
-    z.object({ path: z.string(), status: z.enum(['valid', 'rejected']), issues: z.array(IssueSchema) }),
+    z.object({
+      path: z.string(),
+      status: z.enum(['valid', 'rejected']),
+      issues: z.array(IssueSchema),
+    }),
   ),
   envelope('heartbeat', z.object({})),
   envelope(
@@ -66,12 +84,20 @@ export const GenerationEventSchema = z.discriminatedUnion('type', [
       partial: PartialResultSchema.nullable(),
     }),
   ),
+  envelope('generation.cancelled', z.object({ partial: PartialResultSchema.nullable() })),
 ]);
 
 export type GenerationEvent = z.infer<typeof GenerationEventSchema>;
 export type GenerationEventType = GenerationEvent['type'];
-export type GenerationEventData<T extends GenerationEventType> = Extract<GenerationEvent, { type: T }>['data'];
+export type GenerationEventData<T extends GenerationEventType> = Extract<
+  GenerationEvent,
+  { type: T }
+>['data'];
 
-export const TERMINAL_EVENT_TYPES = ['generation.completed', 'generation.failed'] as const;
+export const TERMINAL_EVENT_TYPES = [
+  'generation.completed',
+  'generation.failed',
+  'generation.cancelled',
+] as const;
 export const isTerminalEvent = (e: GenerationEvent): boolean =>
   (TERMINAL_EVENT_TYPES as readonly string[]).includes(e.type);

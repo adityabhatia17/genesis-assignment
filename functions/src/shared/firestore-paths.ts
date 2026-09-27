@@ -3,6 +3,8 @@ const project = (uid: string, pid: string) => `users/${uid}/projects/${pid}`;
 export const paths = {
   integration: (uid: string) => `users/${uid}/integrations/highlevel`,
   events: (uid: string) => `users/${uid}/events`,
+  userEvent: (uid: string, eventId: string) => `users/${uid}/events/${eventId}`,
+  webhookEvent: (webhookId: string) => `webhookEvents/${webhookId}`,
   project,
   projects: (uid: string) => `users/${uid}/projects`,
   files: (uid: string, pid: string) => `${project(uid, pid)}/files`,
@@ -10,7 +12,8 @@ export const paths = {
   messages: (uid: string, pid: string) => `${project(uid, pid)}/messages`,
   generations: (uid: string, pid: string) => `${project(uid, pid)}/generations`,
   generation: (uid: string, pid: string, gid: string) => `${project(uid, pid)}/generations/${gid}`,
-  staged: (uid: string, pid: string, gid: string) => `${project(uid, pid)}/generations/${gid}/staged`,
+  staged: (uid: string, pid: string, gid: string) =>
+    `${project(uid, pid)}/generations/${gid}/staged`,
   rawArtifact: (uid: string, pid: string, gid: string) =>
     `${project(uid, pid)}/generations/${gid}/artifacts/raw`,
   snapshots: (uid: string, pid: string) => `${project(uid, pid)}/snapshots`,
@@ -19,4 +22,5 @@ export const paths = {
   connection: (uid: string) => `hlConnections/${uid}`,
   connections: () => 'hlConnections',
   oauthState: (hash: string) => `oauthStates/${hash}`,
+  rateLimit: (id: string) => `rateLimits/${id}`,
 } as const;

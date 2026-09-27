@@ -36,17 +36,11 @@ jobs:
   functions:
     name: functions (lint · typecheck · unit · build)
     runs-on: ubuntu-latest
-    if: hashFiles('functions/package.json') != ''
     defaults: { run: { working-directory: functions } }
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v7
-        with:
-          {
-            node-version: 24,
-            cache: npm,
-            cache-dependency-path: functions/package-lock.json,
-          }
+        with: { node-version: 24, cache: npm, cache-dependency-path: functions/package-lock.json }
       - run: npm ci
       - run: npm run lint
       - run: npm run typecheck
@@ -57,16 +51,10 @@ jobs:
     name: rules + integration (emulators)
     runs-on: ubuntu-latest
     needs: functions
-    if: hashFiles('functions/package.json') != ''
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v7
-        with:
-          {
-            node-version: 24,
-            cache: npm,
-            cache-dependency-path: functions/package-lock.json,
-          }
+        with: { node-version: 24, cache: npm, cache-dependency-path: functions/package-lock.json }
       - uses: actions/setup-java@v6
         with: { distribution: temurin, java-version: 21 }
       - run: npm i -g firebase-tools@15
@@ -77,17 +65,11 @@ jobs:
   frontend:
     name: frontend (lint · typecheck · unit · build · bundle)
     runs-on: ubuntu-latest
-    if: hashFiles('frontend/package.json') != ''
     defaults: { run: { working-directory: frontend } }
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v7
-        with:
-          {
-            node-version: 24,
-            cache: npm,
-            cache-dependency-path: frontend/package-lock.json,
-          }
+        with: { node-version: 24, cache: npm, cache-dependency-path: frontend/package-lock.json }
       - run: npm ci
       - run: npm run lint
       - run: npm run typecheck

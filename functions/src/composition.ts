@@ -28,6 +28,7 @@ import { createTokenEndpointClient } from './modules/highlevel/oauth/token-endpo
 import { LocationContextService } from './modules/highlevel/metadata/location-context.service.js';
 import { runtimeRouter } from './modules/highlevel/runtime/runtime.routes.js';
 import { RuntimeService } from './modules/highlevel/runtime/runtime.service.js';
+import { FirestoreRateLimiter, MemoryRateLimiter } from './modules/rate-limit/rate-limiter.js';
 import { FirestoreProjectAccess } from './modules/projects/project-access.js';
 import { BlobsRepo } from './modules/snapshots/blobs.repo.js';
 import { RestoreService } from './modules/snapshots/restore.service.js';
@@ -82,22 +83,26 @@ function buildApiApp(config: RuntimeConfig): Express {
     clock,
     logger,
   });
+  const limiter = new FirestoreRateLimiter(db, clock);
+  // Per instance. The preview already caps each iframe, and a shared Firestore
+  // counter would serialize the burst of calls on first load.
   const runtime = new RuntimeService({
     projects: new FirestoreProjectAccess(db),
     tokens: tokenManager,
     connections,
     hl,
+    limiter: new MemoryRateLimiter(clock),
   });
   const blobs = new BlobsRepo(db);
   const commits = new CommitService(db, blobs);
   const publicRouters: Router[] = [oauthPublicRouter(oauth)];
   const authedRouters: Router[] = [
-    oauthAuthedRouter(oauth),
+    oauthAuthedRouter(oauth, limiter),
     connectionRouter(connections, clock),
     runtimeRouter(runtime),
     generationControlRouter({ generations: new GenerationsRepo(db), commits, clock }),
-    filesRouter(new FileSaveService(db, clock)),
-    snapshotsRouter(new RestoreService(db, blobs, commits, clock)),
+    filesRouter(new FileSaveService(db, clock), limiter),
+    snapshotsRouter(new RestoreService(db, blobs, commits, clock), limiter),
   ];
   return createHttpApp({
     service: 'api',
@@ -135,9 +140,6 @@ function buildGenerateApp(config: RuntimeConfig): Express {
     logger: logger.child({ component: 'hl' }),
   });
   const locationContext = new LocationContextService({ connections, tokens, hl, clock, logger });
-  if (config.llmProvider === 'anthropic' && !config.anthropicWorkspaceId) {
-    throw new Error('ANTHROPIC_WORKSPACE_ID is required when LLM_PROVIDER=anthropic');
-  }
   const provider: ModelProvider =
     config.llmProvider === 'fake'
       ? new FakeProvider({ chunkDelayMs: 15 })
@@ -165,7 +167,14 @@ function buildGenerateApp(config: RuntimeConfig): Express {
     clock,
   });
   const publicRouters: Router[] = config.sseSmokeEnabled ? [sseSmokeRouter()] : [];
-  const authedRouters: Router[] = [generationRouter({ orchestrator })];
+  const authedRouters: Router[] = [
+    generationRouter({
+      orchestrator,
+      limiter: new FirestoreRateLimiter(db, clock),
+      generationEnabled: config.generationEnabled,
+      generationDailyGlobalCap: config.generationDailyGlobalCap,
+    }),
+  ];
   return createHttpApp({
     service: 'generate',
     version: VERSION,

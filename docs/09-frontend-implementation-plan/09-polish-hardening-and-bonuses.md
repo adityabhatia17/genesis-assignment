@@ -12,16 +12,16 @@ Every surface already has its states (FSD §15). This task checks them against t
 
 - [ ] **Step 1: Walk the catalog** and tick each row in a real browser, light and dark, 1440 px and 390 px:
 
-| Surface | Loading | Empty | Error | Other |
-|---|---|---|---|---|
-| Auth | button spinner | — | mapped message | redirect after sign-in |
-| Dashboard | 3 skeleton cards | "No projects yet" | "Couldn't load projects" + Retry | OAuth return toasts, reauth card |
-| Workspace | "Opening project" | — | "Couldn't open this project" / "Project not found" | offline banner |
-| Chat | skeleton messages | example prompts | outcome banner | live message, Stop |
-| Files / editor | — | "No files yet" / "Select a file" | conflict notice + dialog | read-only while generating, Follow |
-| Preview | "Rebuilding…" | "Your app will appear here" | build notes, console errors badge | not-connected and location-mismatch alerts |
-| Snapshots | skeletons | "No snapshots yet" | "Couldn't load snapshots" + Retry | current marker, restore disabled while generating |
-| Diff | spinner | "No changes in this version" | "Couldn't load the changes" | base switch |
+| Surface        | Loading           | Empty                            | Error                                              | Other                                             |
+| -------------- | ----------------- | -------------------------------- | -------------------------------------------------- | ------------------------------------------------- |
+| Auth           | button spinner    | —                                | mapped message                                     | redirect after sign-in                            |
+| Dashboard      | 3 skeleton cards  | "No projects yet"                | "Couldn't load projects" + Retry                   | OAuth return toasts, reauth card                  |
+| Workspace      | "Opening project" | —                                | "Couldn't open this project" / "Project not found" | offline banner                                    |
+| Chat           | skeleton messages | example prompts                  | outcome banner                                     | live message, Stop                                |
+| Files / editor | —                 | "No files yet" / "Select a file" | conflict notice + dialog                           | read-only while generating, Follow                |
+| Preview        | "Rebuilding…"     | "Your app will appear here"      | build notes, console errors badge                  | not-connected and location-mismatch alerts        |
+| Snapshots      | skeletons         | "No snapshots yet"               | "Couldn't load snapshots" + Retry                  | current marker, restore disabled while generating |
+| Diff           | spinner           | "No changes in this version"     | "Couldn't load the changes"                        | base switch                                       |
 
 - [ ] **Step 2: Global error handler** — already in `main.ts` (FE-0.6): unexpected component errors log once and show a generic toast.
 - [ ] **Step 3: Copy review** — no emoji, no "AI magic" wording, sentences end without exclamation marks. **Commit** fixes as `fix(frontend): …`.
@@ -31,10 +31,12 @@ Every surface already has its states (FSD §15). This task checks them against t
 ### Task FE-8.2: Accessibility and keyboard shortcuts
 
 **Files:**
+
 - Create: `frontend/src/features/workspace/composables/useWorkspaceShortcuts.ts`
 - Modify: `frontend/src/features/workspace/WorkspacePage.vue` (call it — see FE-3.1)
 
 `frontend/src/features/workspace/composables/useWorkspaceShortcuts.ts`:
+
 ```ts
 import { useEventListener } from '@vueuse/core';
 import { useWorkspaceStore } from '../stores/workspace.store';
@@ -60,9 +62,11 @@ export function useWorkspaceShortcuts(): void {
 ### Task FE-8.3: Performance budget
 
 **Files:**
+
 - Create: `frontend/scripts/check-bundle.mjs`
 
 `frontend/scripts/check-bundle.mjs`:
+
 ```js
 #!/usr/bin/env node
 // Fails the build when the code needed for first paint grows past the budget.
@@ -76,7 +80,8 @@ const dist = join(import.meta.dirname, '..', 'dist');
 const manifest = JSON.parse(readFileSync(join(dist, '.vite', 'manifest.json'), 'utf8'));
 
 const entryKey = Object.keys(manifest).find((k) => manifest[k].isEntry);
-if (!entryKey) throw new Error('No entry chunk in dist/.vite/manifest.json (is build.manifest enabled?)');
+if (!entryKey)
+  throw new Error('No entry chunk in dist/.vite/manifest.json (is build.manifest enabled?)');
 
 const seen = new Set();
 const visit = (key) => {
@@ -95,7 +100,9 @@ for (const key of seen) {
 }
 console.log(`${total.toFixed(1).padStart(8)} KB  total (gzip) — budget ${BUDGET_KB} KB`);
 if (total > BUDGET_KB) {
-  console.error('Initial bundle is over budget. Lazy-load the new dependency or raise the budget deliberately.');
+  console.error(
+    'Initial bundle is over budget. Lazy-load the new dependency or raise the budget deliberately.',
+  );
   process.exit(1);
 }
 ```
@@ -112,7 +119,7 @@ Out of v1. Production smoke is the manual checklist in FE-8.6.
 
 ### Task FE-8.5 (bonus R-B6): Webhook events in the preview
 
-Assignment bonus R-B6 is **out of v1**. Do not add `events.repo.ts`, `usePreviewEvents`, or `bridge.pushEvent`.
+Implemented (R-B6): `events.repo.ts`, `usePreviewEvents`, and `bridge.pushEvent` (returns false until the preview port is open).
 
 ### Task FE-8.6: Deploy to Firebase Hosting and smoke-test production (R-DEP1)
 
@@ -129,14 +136,14 @@ Expected: `Hosting URL: https://<projectId>.web.app`.
 
 - [ ] **Step 3: Production smoke** — run the BE-8.6 checklist plus:
 
-| # | Check | Expected |
-|---|---|---|
-| 1 | Open `/projects/anything` signed out | redirected to `/sign-in?redirect=…` |
-| 2 | Refresh on `/dashboard` while signed in | stays signed in (R-AUTH2) |
-| 3 | Deep link reload on `/projects/<id>` | SPA rewrite serves the app |
-| 4 | Response headers of `/` | `X-Frame-Options: DENY`, `nosniff`, HSTS; **no** CSP header (preview inheritance) |
-| 5 | Network tab during a generation | `text/event-stream` from `…cloudfunctions.net/generate`, events arriving incrementally |
-| 6 | Preview iframe attributes | `sandbox="allow-scripts allow-forms"`, no `allow-same-origin` |
-| 7 | Narrow window (390 px) | Chat / Code / Preview tabs; a stream keeps running when switching tabs |
+| #   | Check                                   | Expected                                                                               |
+| --- | --------------------------------------- | -------------------------------------------------------------------------------------- |
+| 1   | Open `/projects/anything` signed out    | redirected to `/sign-in?redirect=…`                                                    |
+| 2   | Refresh on `/dashboard` while signed in | stays signed in (R-AUTH2)                                                              |
+| 3   | Deep link reload on `/projects/<id>`    | SPA rewrite serves the app                                                             |
+| 4   | Response headers of `/`                 | `X-Frame-Options: DENY`, `nosniff`, HSTS; **no** CSP header (preview inheritance)      |
+| 5   | Network tab during a generation         | `text/event-stream` from `…cloudfunctions.net/generate`, events arriving incrementally |
+| 6   | Preview iframe attributes               | `sandbox="allow-scripts allow-forms"`, no `allow-same-origin`                          |
+| 7   | Narrow window (390 px)                  | Chat / Code / Preview tabs; a stream keeps running when switching tabs                 |
 
 - [ ] **Step 4: Commit and tag** — `git tag -a v1.0.0 -m "Genesis submission" && git push --tags` (after BE-8.6).

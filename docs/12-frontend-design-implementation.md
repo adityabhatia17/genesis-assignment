@@ -3,7 +3,7 @@
 **Status:** Approved
 **Date:** 2026-09-26
 **Reads:** [`11-design-system.md`](11-design-system.md) (the tokens and rules), [`06-frontend-system-design.md`](06-frontend-system-design.md) (architecture), [`09-frontend-implementation-plan/`](09-frontend-implementation-plan/00-overview.md) (task-by-task build, code-verified).
-**Purpose:** the one place that says *how the design system in `11` becomes the running app* — which layer owns which value, the exact file edits, and which frontend-plan tasks change as a result. Nothing here duplicates `11`'s values; it references them by token name.
+**Purpose:** the one place that says _how the design system in `11` becomes the running app_ — which layer owns which value, the exact file edits, and which frontend-plan tasks change as a result. Nothing here duplicates `11`'s values; it references them by token name.
 
 ---
 
@@ -266,15 +266,15 @@ Notes on what changed from FE-0.2's original block, and why (each is a fix to a 
 
 FE-0.2 step 3 runs `npx shadcn-vue@2.8.2 add -y button input label textarea field card dialog alert-dialog sheet tabs badge dropdown-menu avatar separator scroll-area resizable tooltip sonner skeleton spinner empty alert collapsible select switch`. Add this as **step 3b**, immediately after: targeted class edits so the generated components match the radius/shadow/motion rules in [`11-design-system.md`](11-design-system.md) §4, §6, §7. All edits are class-string changes only — no component logic changes, no new props.
 
-| File | Change |
-|---|---|
-| `components/ui/badge/index.ts` | `rounded-4xl` → `rounded-sm` (4px square badges, not pills — design §4) |
-| `components/ui/dialog/DialogContent.vue`, `alert-dialog/AlertDialogContent.vue` | confirm `rounded-xl` maps to the new 10px `--radius-xl` (no class change needed — verify after §3's radius-base fix) |
-| `components/ui/dialog/DialogOverlay.vue`, `alert-dialog/AlertDialogOverlay.vue`, `sheet/SheetOverlay.vue` | `bg-black/10 supports-backdrop-filter:backdrop-blur-xs` / `bg-black/80` → `bg-scrim` (flat, no blur — design §1.1 "no glassmorphism") |
-| `components/ui/skeleton/Skeleton.vue` | `bg-muted animate-pulse` → `bg-muted animate-pulse-opacity` — add a `@utility pulse-opacity` in `main.css` step 3 (`opacity: 1 / .5` keyframe, no color shift) so skeletons don't pulse toward a different hue (design §6 "opacity-only shimmer") |
-| `components/ui/button/index.ts` (destructive variant) | `bg-destructive/10 … text-destructive` → `bg-destructive text-destructive-foreground` (solid fill per design §7, not a tinted-text ghost button; `--destructive-foreground` already carries the per-theme fix from §3 above) |
-| `components/ui/sonner/Sonner.vue` | `classes: { toast: 'rounded-2xl' }` → `'rounded-lg'` (8px, matches design §4 toast radius, not the CLI default) |
-| `components/ui/input/Input.vue`, `textarea/Textarea.vue` | confirm `text-base md:text-sm` is kept as-is (16px on phones prevents iOS auto-zoom on focus; 13px `text-sm` desktop matches design) — no change, called out so it isn't "fixed" by mistake |
+| File                                                                                                      | Change                                                                                                                                                                                                                                            |
+| --------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `components/ui/badge/index.ts`                                                                            | `rounded-4xl` → `rounded-sm` (4px square badges, not pills — design §4)                                                                                                                                                                           |
+| `components/ui/dialog/DialogContent.vue`, `alert-dialog/AlertDialogContent.vue`                           | confirm `rounded-xl` maps to the new 10px `--radius-xl` (no class change needed — verify after §3's radius-base fix)                                                                                                                              |
+| `components/ui/dialog/DialogOverlay.vue`, `alert-dialog/AlertDialogOverlay.vue`, `sheet/SheetOverlay.vue` | `bg-black/10 supports-backdrop-filter:backdrop-blur-xs` / `bg-black/80` → `bg-scrim` (flat, no blur — design §1.1 "no glassmorphism")                                                                                                             |
+| `components/ui/skeleton/Skeleton.vue`                                                                     | `bg-muted animate-pulse` → `bg-muted animate-pulse-opacity` — add a `@utility pulse-opacity` in `main.css` step 3 (`opacity: 1 / .5` keyframe, no color shift) so skeletons don't pulse toward a different hue (design §6 "opacity-only shimmer") |
+| `components/ui/button/index.ts` (destructive variant)                                                     | `bg-destructive/10 … text-destructive` → `bg-destructive text-destructive-foreground` (solid fill per design §7, not a tinted-text ghost button; `--destructive-foreground` already carries the per-theme fix from §3 above)                      |
+| `components/ui/sonner/Sonner.vue`                                                                         | `classes: { toast: 'rounded-2xl' }` → `'rounded-lg'` (8px, matches design §4 toast radius, not the CLI default)                                                                                                                                   |
+| `components/ui/input/Input.vue`, `textarea/Textarea.vue`                                                  | confirm `text-base md:text-sm` is kept as-is (16px on phones prevents iOS auto-zoom on focus; 13px `text-sm` desktop matches design) — no change, called out so it isn't "fixed" by mistake                                                       |
 
 Step 5 (verify) gains: after the edits, `npm run typecheck` and `grep -rL "text-sm\b" src/components/ui | grep -c rounded-4xl` returns `0`.
 
@@ -282,13 +282,13 @@ Step 5 (verify) gains: after the edits, `npm run typecheck` and `grep -rL "text-
 
 New shared components under `src/components/common/`, added to FE-0.6 (currently `PageState.vue · RelativeTime.vue · OfflineBanner.vue · ThemeToggle.vue · ConfirmDialog.vue` per [`09-frontend-implementation-plan/00-overview.md`](09-frontend-implementation-plan/00-overview.md) line 62):
 
-| Component | Props | Renders |
-|---|---|---|
-| `StatusDot.vue` | `state: 'active' \| 'positive' \| 'warning' \| 'negative' \| 'off'`, `size?: 7 \| 6` | 7×7px filled circle (+ soft halo when `active`) or hollow ring, per design §6 |
-| `StatusBadge.vue` | `label: string`, `tone: 'ok' \| 'warn' \| 'err' \| 'neutral'` | `StatusDot` + word, `text-xs`, used for Connected/Reconnect required/Rejected/Not connected |
-| `VersionBadge.vue` | `n: number`, `current?: boolean` | monospace `v{n}` chip (`line2` border) + optional "Current" pill (`primary-soft`/`primary`) |
-| `Kbd.vue` | `keys: string[]` | `⌘` `Enter` style key caps, `font-mono text-2xs`, `line` border, 3px radius |
-| `InlineNotice.vue` | `tone`, `icon?`, slot | the recurring bordered/tinted single-line notice (offline banner, rate-limit strip, HighLevel-not-connected hint) |
+| Component          | Props                                                                                | Renders                                                                                                           |
+| ------------------ | ------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------- |
+| `StatusDot.vue`    | `state: 'active' \| 'positive' \| 'warning' \| 'negative' \| 'off'`, `size?: 7 \| 6` | 7×7px filled circle (+ soft halo when `active`) or hollow ring, per design §6                                     |
+| `StatusBadge.vue`  | `label: string`, `tone: 'ok' \| 'warn' \| 'err' \| 'neutral'`                        | `StatusDot` + word, `text-xs`, used for Connected/Reconnect required/Rejected/Not connected                       |
+| `VersionBadge.vue` | `n: number`, `current?: boolean`                                                     | monospace `v{n}` chip (`line2` border) + optional "Current" pill (`primary-soft`/`primary`)                       |
+| `Kbd.vue`          | `keys: string[]`                                                                     | `⌘` `Enter` style key caps, `font-mono text-2xs`, `line` border, 3px radius                                       |
+| `InlineNotice.vue` | `tone`, `icon?`, slot                                                                | the recurring bordered/tinted single-line notice (offline banner, rate-limit strip, HighLevel-not-connected hint) |
 
 These wrap existing shadcn primitives (Badge, Alert) with the design's exact spacing/icon pairing — they don't replace FE-0.6's existing `PageState`/`OfflineBanner`, they factor out the pattern those already use twice.
 
@@ -359,7 +359,7 @@ The plan (`09-frontend-implementation-plan/`) decides **what** ships; this desig
 
 Everything else in the design (auth, connection card, chat transcript states, file tree, editor chrome, console/calls drawer, version history sheet, toasts, dialogs, empty/loading/error states) matches what the plan already builds — no scope change, only the token/component substitutions in §3-§6 above.
 
-Not built, by existing plan decision (unchanged by this document): the **diff dialog** (FE-7.3, bonus R-B3, out of v1 — [`11-design-system.md`](11-design-system.md) §10).
+Built: the **diff dialog** (FE-7.3, bonus R-B3 — [`11-design-system.md`](11-design-system.md) §10).
 
 ## 8. Verification
 
@@ -374,13 +374,13 @@ Manual spot-check (once FE-1/FE-2/FE-4 land): open the app in both themes, tab t
 
 ## 9. Task-list delta
 
-| Task | Change |
-|---|---|
-| FE-0.2 | Font swap (§2), full `main.css` replacement (§3), new step 3b component edits (§4) |
-| FE-0.6 | Add `StatusDot`, `StatusBadge`, `VersionBadge`, `Kbd`, `InlineNotice` (§5) |
-| FE-3.x (`03-dashboard-and-highlevel-connection.md`) | `ProjectCard.vue` → `ProjectRow.vue`, grid → list (§7.1) |
-| FE-4.x (`04-workspace-shell-and-chat.md`) | Panel `:default-size` values (§7.2), `ExamplePrompts.vue` third item (§7.3) |
-| FE-5.1 (`06-code-editor.md`) | New `monaco-theme.ts`, theme prop values `genesis-light`/`genesis-dark` (§6) |
-| FE-7.3 | No change — diff dialog stays out of v1 |
+| Task                                                | Change                                                                             |
+| --------------------------------------------------- | ---------------------------------------------------------------------------------- |
+| FE-0.2                                              | Font swap (§2), full `main.css` replacement (§3), new step 3b component edits (§4) |
+| FE-0.6                                              | Add `StatusDot`, `StatusBadge`, `VersionBadge`, `Kbd`, `InlineNotice` (§5)         |
+| FE-3.x (`03-dashboard-and-highlevel-connection.md`) | `ProjectCard.vue` → `ProjectRow.vue`, grid → list (§7.1)                           |
+| FE-4.x (`04-workspace-shell-and-chat.md`)           | Panel `:default-size` values (§7.2), `ExamplePrompts.vue` third item (§7.3)        |
+| FE-5.1 (`06-code-editor.md`)                        | New `monaco-theme.ts`, theme prop values `genesis-light`/`genesis-dark` (§6)       |
+| FE-7.3                                              | Built — View changes opens the diff dialog                                         |
 
 No backend, contract, or runtime-manifest change is implied by this document.

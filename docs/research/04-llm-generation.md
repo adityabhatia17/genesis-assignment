@@ -31,25 +31,24 @@ const stream = client.beta.messages.stream(
     max_tokens: 32_000, // bounded cost and time; see §7
     system: [
       {
-        type: "text",
+        type: 'text',
         text: STATIC_SYSTEM_PROMPT_V1,
-        cache_control: { type: "ephemeral" },
+        cache_control: { type: 'ephemeral' },
       },
     ],
     messages, // history + final user turn with project context
-    thinking: { type: "adaptive", display: "summarized" }, // stream a readable plan while it thinks
+    thinking: { type: 'adaptive', display: 'summarized' }, // stream a readable plan while it thinks
     output_config: { effort: config.anthropicEffort }, // 'medium' default for this workload
-    betas: ["server-side-fallback-2026-07-01"],
-    fallbacks: "default", // server re-runs a policy-declined request on a fallback model
+    betas: ['server-side-fallback-2026-07-01'],
+    fallbacks: 'default', // server re-runs a policy-declined request on a fallback model
   },
   { signal: abortController.signal }, // cancel / disconnect / deadline
 );
 
 for await (const event of stream) {
-  if (event.type === "content_block_delta") {
-    if (event.delta.type === "text_delta") onText(event.delta.text);
-    else if (event.delta.type === "thinking_delta")
-      onThinking(event.delta.thinking);
+  if (event.type === 'content_block_delta') {
+    if (event.delta.type === 'text_delta') onText(event.delta.text);
+    else if (event.delta.type === 'thinking_delta') onThinking(event.delta.thinking);
   }
 }
 const final = await stream.finalMessage(); // stop_reason, usage, model
@@ -157,7 +156,7 @@ Worst case ≈ 100k input tokens; typical 6–15k. Everything inside `<project_f
 | Refinement on a 20 KB project      | ~12k (2k cached) | ~3–6k                          | ~$0.13–0.21 |
 | Worst case (`max_tokens` 32k)      | ~100k            | 32k                            | ~$1.30      |
 
-Controls: `max_tokens` 32k, 300 s generation deadline, provider-side monthly spend limit. Per-route Cloud Function rate limits, a global generation cap, and a `GENERATION_ENABLED` kill switch are out of v1 (assignment bonus R-B4).
+Controls: `max_tokens` 32k, 300 s generation deadline, provider-side monthly spend limit. Per-route Cloud Function rate limits, a global generation cap, a per-user daily cap, and a `GENERATION_ENABLED` kill switch are implemented (assignment bonus R-B4).
 
 ## 11. Quality checks considered (out of v1)
 

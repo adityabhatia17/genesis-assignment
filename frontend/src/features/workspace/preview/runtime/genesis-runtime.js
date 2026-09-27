@@ -23,7 +23,16 @@
     'calendars.list',
     'calendars.events',
   ];
-  var EVENTS = [];
+  var EVENTS = [
+    'contact.created',
+    'contact.updated',
+    'contact.deleted',
+    'appointment.created',
+    'appointment.updated',
+    'appointment.deleted',
+    'message.inbound',
+    'message.outbound',
+  ];
 
   // ── storage shims: sandboxed documents throw on localStorage/sessionStorage access ──
   function memoryStorage() {

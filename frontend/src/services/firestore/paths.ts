@@ -8,6 +8,7 @@ import type {
   MessageDoc,
   ProjectDoc,
   SnapshotDoc,
+  UserEventDoc,
 } from '@/contracts/firestore-docs';
 import { db } from '@/lib/firebase';
 import { readConverter } from './converters';
@@ -55,5 +56,9 @@ export const refs = {
   blob: (uid: string, pid: string, blobId: string) =>
     doc(db(), ...project(uid, pid), 'blobs', blobId).withConverter(
       readConverter<BlobDoc<Timestamp>>(),
+    ),
+  events: (uid: string) =>
+    collection(db(), 'users', uid, 'events').withConverter(
+      readConverter<UserEventDoc<Timestamp>>(),
     ),
 };

@@ -32,7 +32,7 @@ This is not a generic "LLM writes a web page" tool: the model writes against a *
 
 **In scope (must):** every requirement in [`research/01`](research/01-assignment-deconstruction.md) §3.1–3.7 (What to Build, constraints, deliverables) and the implicit requirements I-01…I-12 that are needed to ship that product.
 
-**Out of scope (assignment bonuses, this submission):** generation cancellation (R-B1), snapshot diff view (R-B3), Cloud Function rate limiting (R-B4), Load more in generated apps (R-B5), webhooks (R-B6). Create/update contact, send message, and free slots are prerequisite “familiarize” verbs, not product requirements. Iterative refinement (R-B2) is not a separate feature — the required generator already includes current files.
+**Implemented assignment bonuses:** generation cancellation (R-B1), snapshot diff (R-B3), Cloud Function rate limits (R-B4), Load more in generated apps (R-B5), and HighLevel webhooks into the preview (R-B6). Iterative refinement (R-B2) is not a separate feature — the required generator already includes current files. Create/update contact, send message, and free slots stay out: they are prerequisite “familiarize” verbs, not product requirements.
 
 **Also out of scope:** eval harness, Anthropic fast mode, Playwright smoke, multiple locations per user, collaborative editing, framework-based generated apps (Vue/React inside the preview), durable resumable generation jobs, publishing generated apps to the HighLevel marketplace, custom domains.
 
@@ -180,11 +180,11 @@ The full HLD is [`04-high-level-design.md`](04-high-level-design.md); canonical 
 
 ## 7. Scope (assignment vs this submission)
 
-The PDF’s bonus list is **out of v1**. We implement What to Build, then stop.
+The required product and the assignment bonuses below are implemented. HighLevel writes stay out.
 
-| In v1                                                                                                                                            | Out of v1                                                                                                           |
-| ------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------- |
-| Auth, OAuth, project CRUD, SSE generation, editor, preview with real CRM data, snapshots + restore, graceful errors with Apply / Discard / Retry | Cancel (R-B1), diff (R-B3), in-app rate limits (R-B4), Load more (R-B5), webhooks (R-B6), write/send/freeSlots APIs |
+| In this submission                                                                                                                                                                                             | Still out                                                                |
+| -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------ |
+| Auth, OAuth, project CRUD, SSE generation, editor, preview with real CRM data, snapshots + restore, Apply / Discard / Retry, cancel (R-B1), diff (R-B3), rate limits (R-B4), Load more (R-B5), webhooks (R-B6) | write/send/freeSlots APIs, eval harness, Anthropic fast mode, Playwright |
 
 ---
 

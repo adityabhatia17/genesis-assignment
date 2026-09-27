@@ -459,6 +459,10 @@ export class GenerationOrchestrator {
       termination,
     });
     if (termination === 'disconnected') return;
+    if (decision.status === 'cancelled') {
+      sse.send('generation.cancelled', { partial: decision.partial });
+      return;
+    }
     sse.send('generation.failed', {
       error: decision.error ?? {
         code: 'INTERNAL',

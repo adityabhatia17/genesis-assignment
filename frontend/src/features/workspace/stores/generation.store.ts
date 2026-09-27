@@ -7,7 +7,11 @@ import { toUserMessage } from '@/lib/errors';
 import { isApiError } from '@/lib/http';
 import { newId } from '@/lib/ids';
 import { streamGeneration } from '@/services/api/generation-stream';
-import { applyGeneration, discardGeneration } from '@/services/api/generations.api';
+import {
+  applyGeneration,
+  cancelGeneration,
+  discardGeneration,
+} from '@/services/api/generations.api';
 import { watchGeneration } from '@/services/firestore/generations.repo';
 import { createGenerationBus } from './generation-bus';
 import {
@@ -254,6 +258,22 @@ export const useGenerationStore = defineStore('generation', () => {
     }
   }
 
+  async function cancel(): Promise<void> {
+    const { projectId: pid } = project();
+    const { generationId, status } = state.value;
+    if (!generationId || (status !== 'streaming' && status !== 'reconciling')) return;
+    dispatch({ type: 'cancel-requested' });
+    try {
+      await cancelGeneration(pid, generationId);
+    } catch (error) {
+      if (state.value.generationId === generationId && state.value.status === 'cancelling') {
+        dispatch({ type: 'cancel-failed' });
+      }
+      if (isApiError(error) && error.code === 'GENERATION_NOT_CANCELLABLE') return;
+      toast.error(toUserMessage(error));
+    }
+  }
+
   function retry(): void {
     const prompt = state.value.prompt;
     if (!prompt || active.value) return;
@@ -298,6 +318,7 @@ export const useGenerationStore = defineStore('generation', () => {
     start,
     applyPartial,
     discardPartial,
+    cancel,
     retry,
     dismiss,
     hydrate,

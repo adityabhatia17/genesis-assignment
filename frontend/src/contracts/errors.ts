@@ -18,6 +18,8 @@ export const ERROR_CODES = [
   'FILE_VERSION_CONFLICT',
   'SNAPSHOT_ALREADY_CURRENT',
   'GENERATION_NOT_APPLYABLE',
+  'GENERATION_NOT_CANCELLABLE',
+  'GENERATION_DISABLED',
   'PROJECT_LOCATION_MISMATCH',
   'GENERATION_INVALID_OUTPUT',
   'GENERATION_REFUSED',
@@ -41,6 +43,7 @@ export const ERROR_CODES = [
   'OAUTH_NOT_LOCATION_TOKEN',
   'PREVIEW_LIMIT',
   'PREVIEW_TIMEOUT',
+  'RATE_LIMITED',
   'UNKNOWN_METHOD',
   'INTERNAL',
 ] as const;
@@ -69,7 +72,11 @@ export const ERROR_CATALOG: Readonly<Record<ErrorCode, ErrorSpec>> = {
     retryable: true,
     message: 'A generation is already running for this project.',
   },
-  DUPLICATE_REQUEST: { status: 409, retryable: false, message: 'This request was already submitted.' },
+  DUPLICATE_REQUEST: {
+    status: 409,
+    retryable: false,
+    message: 'This request was already submitted.',
+  },
   FILE_VERSION_CONFLICT: {
     status: 409,
     retryable: false,
@@ -84,6 +91,16 @@ export const ERROR_CATALOG: Readonly<Record<ErrorCode, ErrorSpec>> = {
     status: 409,
     retryable: false,
     message: "There's nothing to apply from this generation.",
+  },
+  GENERATION_NOT_CANCELLABLE: {
+    status: 409,
+    retryable: false,
+    message: 'This generation is no longer running.',
+  },
+  GENERATION_DISABLED: {
+    status: 503,
+    retryable: false,
+    message: 'Generation is temporarily unavailable.',
   },
   PROJECT_LOCATION_MISMATCH: {
     status: 409,
@@ -177,6 +194,11 @@ export const ERROR_CATALOG: Readonly<Record<ErrorCode, ErrorSpec>> = {
     message: 'Too many HighLevel calls from the preview.',
   },
   PREVIEW_TIMEOUT: { status: 504, retryable: true, message: 'HighLevel call timed out.' },
+  RATE_LIMITED: {
+    status: 429,
+    retryable: true,
+    message: 'Too many requests — try again shortly.',
+  },
   UNKNOWN_METHOD: { status: 400, retryable: false, message: 'Unknown SDK method.' },
   INTERNAL: { status: 500, retryable: true, message: 'Something went wrong. Please try again.' },
 };

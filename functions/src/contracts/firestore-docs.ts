@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import type { ErrorCode } from './errors.js';
+import type { RuntimeEventName } from './hl-runtime.js';
 import type { FileLanguage } from './paths.js';
 
 export const IssueSchema = z.object({
@@ -27,9 +28,20 @@ export const PartialResultSchema = z.object({
 });
 export type PartialResult = z.infer<typeof PartialResultSchema>;
 
-export const GENERATION_STATUSES = ['streaming', 'completed', 'failed', 'interrupted'] as const;
+export const GENERATION_STATUSES = [
+  'streaming',
+  'completed',
+  'failed',
+  'interrupted',
+  'cancelled',
+] as const;
 export type GenerationStatus = (typeof GENERATION_STATUSES)[number];
-export const TERMINAL_GENERATION_STATUSES = ['completed', 'failed', 'interrupted'] as const;
+export const TERMINAL_GENERATION_STATUSES = [
+  'completed',
+  'failed',
+  'interrupted',
+  'cancelled',
+] as const;
 export type TerminalGenerationStatus = (typeof TERMINAL_GENERATION_STATUSES)[number];
 
 export type SnapshotKind = 'generation' | 'checkpoint' | 'restore';
@@ -141,7 +153,12 @@ export interface GenerationDoc<T> {
   partial: GenerationPartial<T> | null;
   usage: Usage | null;
   timings: { ttftMs: number | null; totalMs: number | null };
-  context: { fileCount: number; historyMessages: number; externalIncluded: boolean; promptChars: number };
+  context: {
+    fileCount: number;
+    historyMessages: number;
+    externalIncluded: boolean;
+    promptChars: number;
+  };
 }
 
 export interface StagedFileDoc<T> {
@@ -187,4 +204,14 @@ export interface BlobDoc<T> {
   content: string;
   sizeBytes: number;
   createdAt: T;
+}
+
+/** Owner-readable relay of one HighLevel webhook. Clients cannot write it. */
+export interface UserEventDoc<T> {
+  type: RuntimeEventName;
+  locationId: string;
+  payload: Record<string, string>;
+  createdAt: T;
+  /** Firestore TTL. Events are live-preview signals and are deleted after a day. */
+  expiresAt: T;
 }

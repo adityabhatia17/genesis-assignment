@@ -6,6 +6,7 @@ import { filesRouter } from '../../../src/modules/files/files.routes.js';
 import { CommitService } from '../../../src/modules/generation/persistence/commit.service.js';
 import { BlobsRepo } from '../../../src/modules/snapshots/blobs.repo.js';
 import { RestoreService } from '../../../src/modules/snapshots/restore.service.js';
+import { MemoryRateLimiter } from '../../../src/modules/rate-limit/rate-limiter.js';
 import { snapshotsRouter } from '../../../src/modules/snapshots/snapshots.routes.js';
 import { systemClock } from '../../../src/shared/clock.js';
 import { firestore } from '../../../src/shared/firebase-admin.js';
@@ -14,6 +15,7 @@ import { fakeLogger } from '../../helpers/fakes.js';
 
 const db = firestore();
 const blobs = new BlobsRepo(db);
+const limiter = new MemoryRateLimiter(systemClock);
 const app = createHttpApp({
   service: 'api',
   version: 't',
@@ -21,8 +23,11 @@ const app = createHttpApp({
   logger: fakeLogger(),
   verifyIdToken: (t) => Promise.resolve({ uid: t }),
   authedRouters: [
-    filesRouter(new FileSaveService(db, systemClock)),
-    snapshotsRouter(new RestoreService(db, blobs, new CommitService(db, blobs), systemClock)),
+    filesRouter(new FileSaveService(db, systemClock), limiter),
+    snapshotsRouter(
+      new RestoreService(db, blobs, new CommitService(db, blobs), systemClock),
+      limiter,
+    ),
   ],
 });
 const FID = 'c'.repeat(20);

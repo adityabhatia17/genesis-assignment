@@ -18,6 +18,7 @@ import { useWorkspace } from '@/features/workspace/workspace-context';
 import { toUserMessage } from '@/lib/errors';
 import type { Snapshot } from '@/services/firestore/types';
 import RestoreSnapshotDialog from './RestoreSnapshotDialog.vue';
+import SnapshotDiffDialog from './SnapshotDiffDialog.vue';
 import SnapshotItem from './SnapshotItem.vue';
 import { useSnapshots } from './useSnapshots';
 
@@ -31,11 +32,17 @@ const currentId = computed(() => ws.project.value?.latestSnapshotId ?? null);
 const dirty = computed(() => ws.project.value?.workingTreeDirty === true);
 
 const restoreOpen = ref(false);
+const diffOpen = ref(false);
 const target = ref<Snapshot | null>(null);
 
 function askRestore(snapshot: Snapshot): void {
   target.value = snapshot;
   restoreOpen.value = true;
+}
+
+function viewChanges(snapshot: Snapshot): void {
+  target.value = snapshot;
+  diffOpen.value = true;
 }
 </script>
 
@@ -75,11 +82,13 @@ function askRestore(snapshot: Snapshot): void {
             :dirty-since-current="dirty"
             :restore-disabled="generating || (snapshot.id === currentId && !dirty)"
             @restore="askRestore(snapshot)"
+            @view="viewChanges(snapshot)"
           />
         </ul>
       </ScrollArea>
     </SheetContent>
   </Sheet>
+  <SnapshotDiffDialog v-model:open="diffOpen" :snapshot="target" />
   <RestoreSnapshotDialog
     v-model:open="restoreOpen"
     :project-id="ws.projectId"

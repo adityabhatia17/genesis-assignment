@@ -67,6 +67,19 @@ export function generationControlRouter(d: {
   );
 
   r.post(
+    `${base}/cancel`,
+    defineHandler({ params: GenerationParams }, async ({ params }, req, res) => {
+      await d.generations.requestCancel(
+        requireUid(req),
+        params.projectId,
+        params.generationId,
+        d.clock.now(),
+      );
+      sendData(res, { cancelled: true as const });
+    }),
+  );
+
+  r.post(
     `${base}/discard`,
     defineHandler({ params: GenerationParams }, async ({ params }, req, res) => {
       await d.generations.markDiscarded(

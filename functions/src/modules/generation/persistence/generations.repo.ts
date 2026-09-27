@@ -113,17 +113,42 @@ export class GenerationsRepo {
   }
 
   /**
-   * User cancel is out of v1 (R-B1): nothing writes a cancel signal, so this watch is a no-op.
-   * The orchestrator still calls it so a later cancel writer can abort the same controller.
+   * Aborts the in-flight generation when `cancelRequestedAt` is written.
+   * Status stays `streaming` until finalize, so a dropped connection is still distinct.
    */
   watchCancel(
-    _uid: string,
-    _pid: string,
-    _gid: string,
-    _onCancel: () => void,
-    _onError: (err: unknown) => void,
+    uid: string,
+    pid: string,
+    gid: string,
+    onCancel: () => void,
+    onError: (err: unknown) => void,
   ): () => void {
-    return () => undefined;
+    let stopped = false;
+    const unsubscribe = this.genRef(uid, pid, gid).onSnapshot(
+      (snap) => {
+        if (stopped || !snap.exists || snap.get('cancelRequestedAt') == null) return;
+        stopped = true;
+        unsubscribe();
+        onCancel();
+      },
+      (err) => onError(err),
+    );
+    return () => {
+      stopped = true;
+      unsubscribe();
+    };
+  }
+
+  /** Marks a running generation for cancellation. A repeat call while the flag is set is a no-op. */
+  async requestCancel(uid: string, pid: string, gid: string, nowMs: number): Promise<void> {
+    await this.db.runTransaction(async (tx) => {
+      const ref = this.genRef(uid, pid, gid);
+      const snap = await tx.get(ref);
+      if (!snap.exists) throw new AppError('GENERATION_NOT_FOUND');
+      if (snap.get('cancelRequestedAt') != null) return;
+      if (snap.get('status') !== 'streaming') throw new AppError('GENERATION_NOT_CANCELLABLE');
+      tx.update(ref, { cancelRequestedAt: ts(nowMs) });
+    });
   }
 
   /** Idempotency + lease + stale takeover + generation/user-message docs, in one transaction. */

@@ -18,6 +18,7 @@ export function describeMessageMeta(
   if (!meta || role === 'user') return null;
   if (meta.status === 'failed') return { text: 'Generation failed', tone: 'error' };
   if (meta.status === 'interrupted') return { text: 'Interrupted', tone: 'warning' };
+  if (meta.status === 'cancelled') return { text: 'Cancelled', tone: 'warning' };
 
   const parts: string[] = [];
   const changed = meta.changedPaths ?? [];

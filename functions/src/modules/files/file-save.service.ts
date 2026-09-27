@@ -1,11 +1,20 @@
 import { Timestamp, type Firestore } from 'firebase-admin/firestore';
 import type { FileSaveResult } from '../../contracts/api.js';
+import type { SnapshotFileEntry } from '../../contracts/firestore-docs.js';
+import type { FileLanguage } from '../../contracts/paths.js';
 import { LIMITS } from '../../contracts/limits.js';
 import { AppError } from '../../shared/app-error.js';
 import type { Clock } from '../../shared/clock.js';
 import { paths } from '../../shared/firestore-paths.js';
 import { sha256Hex, utf8Bytes } from '../../shared/hash.js';
+import type { TreeFile } from '../generation/validation/validate-project.js';
 import { isLeaseStale, toProjectRecord } from '../projects/project-access.js';
+import {
+  diffManifests,
+  manifestOf,
+  snapshotLabel,
+  treeBytes,
+} from '../snapshots/snapshot-builder.js';
 
 export class FileSaveService {
   constructor(
@@ -59,6 +68,28 @@ export class FileSaveService {
       if (contentHash === fileSnap.get('contentHash'))
         return { fileId, path, version, sizeBytes: oldBytes, contentHash };
 
+      const filesSnap = await tx.get(this.db.collection(paths.files(uid, projectId)));
+      const parentId = project.latestSnapshotId;
+      const parentSnap = parentId
+        ? await tx.get(this.db.doc(paths.snapshot(uid, projectId, parentId)))
+        : null;
+      const blobRef = this.db.doc(paths.blob(uid, projectId, contentHash));
+      const blobSnap = await tx.get(blobRef);
+
+      const tree = new Map<string, TreeFile>();
+      for (const doc of filesSnap.docs) {
+        const saved = doc.id === fileId;
+        const filePath = (saved ? path : doc.get('path')) as string;
+        const fileContent = saved ? content : (doc.get('content') as string);
+        tree.set(filePath, {
+          path: filePath,
+          content: fileContent,
+          sizeBytes: saved ? sizeBytes : (doc.get('sizeBytes') as number),
+          sha256: saved ? contentHash : (doc.get('contentHash') as string),
+          language: doc.get('language') as FileLanguage,
+        });
+      }
+
       const now = Timestamp.fromMillis(nowMs);
       tx.update(fileRef, {
         content,
@@ -68,7 +99,35 @@ export class FileSaveService {
         source: 'manual',
         updatedAt: now,
       });
-      tx.update(projectRef, { workingTreeDirty: true, totalBytes, updatedAt: now });
+      if (!blobSnap.exists) {
+        tx.create(blobRef, { content, sizeBytes, createdAt: now });
+      }
+      const manifest = manifestOf(tree);
+      const seq = project.snapshotSeq + 1;
+      const snapRef = this.db.collection(paths.snapshots(uid, projectId)).doc();
+      const parentFiles = parentSnap?.exists
+        ? (parentSnap.get('files') as Record<string, SnapshotFileEntry>)
+        : null;
+      tx.create(snapRef, {
+        seq,
+        kind: 'checkpoint',
+        label: snapshotLabel('checkpoint', `Saved ${path}`),
+        generationId: null,
+        restoredFromSnapshotId: null,
+        parentSnapshotId: parentId,
+        files: manifest,
+        fileCount: tree.size,
+        totalBytes: treeBytes(tree),
+        ...diffManifests(parentFiles, manifest),
+        createdAt: now,
+      });
+      tx.update(projectRef, {
+        workingTreeDirty: false,
+        latestSnapshotId: snapRef.id,
+        snapshotSeq: seq,
+        totalBytes,
+        updatedAt: now,
+      });
       return { fileId, path, version: version + 1, sizeBytes, contentHash };
     });
   }

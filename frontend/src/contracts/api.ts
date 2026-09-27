@@ -4,7 +4,11 @@
 import { z } from 'zod';
 import { LIMITS } from './limits.js';
 
-export const DocId = z.string().min(1).max(128).regex(/^[A-Za-z0-9_-]+$/, 'Invalid id');
+export const DocId = z
+  .string()
+  .min(1)
+  .max(128)
+  .regex(/^[A-Za-z0-9_-]+$/, 'Invalid id');
 const FileId = z.string().regex(/^[0-9a-f]{20}$/, 'Invalid file id');
 const Sha256 = z.string().regex(/^[0-9a-f]{64}$/);
 
@@ -74,5 +78,11 @@ export const ApplyResult = z.object({
 });
 export type ApplyResult = z.infer<typeof ApplyResult>;
 export const DiscardResult = z.object({ discarded: z.literal(true) });
+export const CancelResult = z.object({ cancelled: z.literal(true) });
+export type CancelResult = z.infer<typeof CancelResult>;
 
-export const HealthResult = z.object({ ok: z.literal(true), service: z.string(), version: z.string() });
+export const HealthResult = z.object({
+  ok: z.literal(true),
+  service: z.string(),
+  version: z.string(),
+});

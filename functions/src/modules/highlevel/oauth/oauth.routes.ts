@@ -1,7 +1,9 @@
 import express, { type Router } from 'express';
 import { OAuthCallbackQuery, OAuthStartBody } from '../../../contracts/api.js';
 import { defineHandler, requireUid } from '../../../http/define-handler.js';
+import { rateLimit } from '../../../http/middleware/rate-limit.js';
 import { sendData } from '../../../http/respond.js';
+import { RATE_LIMITS, type RateLimiter } from '../../rate-limit/rate-limiter.js';
 import type { OAuthService } from './oauth.service.js';
 
 export function oauthPublicRouter(service: OAuthService): Router {
@@ -21,10 +23,11 @@ export function oauthPublicRouter(service: OAuthService): Router {
   return r;
 }
 
-export function oauthAuthedRouter(service: OAuthService): Router {
+export function oauthAuthedRouter(service: OAuthService, limiter: RateLimiter): Router {
   const r = express.Router();
   r.post(
     '/v1/hl/oauth/start',
+    rateLimit(limiter, RATE_LIMITS.oauthStart),
     defineHandler({ body: OAuthStartBody }, async ({ body }, req, res) => {
       sendData(res, await service.start(requireUid(req), body.returnPath));
     }),

@@ -67,9 +67,12 @@ function openFile(path: string): void {
     <PromptComposer
       v-model="draft"
       :busy="busy"
+      :cancelling="state.status === 'cancelling'"
+      :can-cancel="state.status === 'streaming' || state.status === 'reconciling'"
       :blocked-reason="blockedReason"
       :hl-connected="hlStatus === 'connected'"
       @submit="generation.start($event)"
+      @cancel="generation.cancel()"
     />
   </section>
 </template>

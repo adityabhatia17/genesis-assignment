@@ -5,7 +5,11 @@ const base = { v: 1, seq: 1, generationId: 'g', ts: 1 };
 describe('SSE contracts', () => {
   it('parses each event family', () => {
     expect(
-      GenerationEventSchema.parse({ ...base, type: 'file.delta', data: { path: 'app.js', text: 'x' } }).type,
+      GenerationEventSchema.parse({
+        ...base,
+        type: 'file.delta',
+        data: { path: 'app.js', text: 'x' },
+      }).type,
     ).toBe('file.delta');
     const failed = GenerationEventSchema.parse({
       ...base,
@@ -17,9 +21,18 @@ describe('SSE contracts', () => {
       },
     });
     expect(isTerminalEvent(failed)).toBe(true);
+    const cancelled = GenerationEventSchema.parse({
+      ...base,
+      seq: 10,
+      type: 'generation.cancelled',
+      data: { partial: { stagedPaths: ['app.js'], applyable: true } },
+    });
+    expect(isTerminalEvent(cancelled)).toBe(true);
   });
   it('rejects unknown types and wrong versions', () => {
     expect(() => GenerationEventSchema.parse({ ...base, type: 'nope', data: {} })).toThrow();
-    expect(() => GenerationEventSchema.parse({ ...base, v: 2, type: 'heartbeat', data: {} })).toThrow();
+    expect(() =>
+      GenerationEventSchema.parse({ ...base, v: 2, type: 'heartbeat', data: {} }),
+    ).toThrow();
   });
 });

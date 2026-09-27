@@ -232,22 +232,22 @@ Generated code only ever sees `{ items, nextCursor, hasMore }`. Cursors carry a 
 - Response headers: `X-RateLimit-Limit-Daily`, `X-RateLimit-Daily-Remaining`, `X-RateLimit-Interval-Milliseconds`, `X-RateLimit-Max`, `X-RateLimit-Remaining`.
 - 429 responses may include `Retry-After`.
 
-Design consequences: bounded retries with backoff on 429/5xx honoring `Retry-After`, logging of the remaining-burst header, and a per-preview call budget in the browser so a buggy generated loop cannot burn the location's quota. Assignment bonus R-B4 (Cloud Function rate limits) and a per-location proxy token bucket are out of v1.
+Design consequences: bounded retries with backoff on 429/5xx honoring `Retry-After`, logging of the remaining-burst header, and a per-preview call budget in the browser so a buggy generated loop cannot burn the location's quota. Assignment bonus R-B4 is implemented (per-user windows, daily caps, kill switch). There is no shared per-location proxy token bucket; `hlProxy` is 240/min in memory per `api` instance.
 
 ---
 
 ## 8. Webhooks (HighLevel platform)
 
-HighLevel can POST events to an app webhook URL. Genesis does not register a webhook URL in v1 (assignment bonus R-B6). Facts below are for the platform, not product work.
+HighLevel POSTs events to `hlWebhook` (R-B6). Facts below are the platform contract the function implements.
 
-| Fact              | Detail                                                                                                                                                                                                                                             |
-| ----------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Subscription      | Set the webhook URL in the app settings and enable events; events are delivered for locations where the app is installed and the matching scope is granted                                                                                         |
-| Signature         | Header **`x-wh-signature`** — RSA-SHA256 signature (base64) over the raw JSON body, verified with HighLevel's published public key (`docs/oauth/WebhookAuthentication.md`)                                                                         |
-| Replay protection | Body contains `timestamp` and `webhookId`: reject if older than 5 minutes; reject duplicate `webhookId`                                                                                                                                            |
-| Key rotation      | Announced by email/Slack; key is a constant in our code, documented as such                                                                                                                                                                        |
-| Relevant events   | `ContactCreate`, `ContactUpdate`, `ContactDelete` (scope `contacts.readonly`), `AppointmentCreate/Update/Delete` (`calendars/events.readonly`), `InboundMessage`/`OutboundMessage` (`conversations/message.readonly`), `UNINSTALL` (app lifecycle) |
-| Raw body          | Cloud Functions expose `req.rawBody` (Buffer) — verify against it, never against a re-serialized `req.body`                                                                                                                                        |
+| Fact              | Detail                                                                                                                                                                                                                                                                                                                                                            |
+| ----------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Subscription      | Set the webhook URL in the app settings and enable events; events are delivered for locations where the app is installed and the matching scope is granted                                                                                                                                                                                                        |
+| Signature         | Header **`X-GHL-Signature`** — Ed25519 over the raw body, verified with HighLevel's published public key. The legacy RSA `x-wh-signature` header stopped on 2026-09-01 and is rejected.                                                                                                                                                                           |
+| Replay protection | When `timestamp` is present, drop the event if it is older than 5 minutes (a late retry is useless in a live preview). Dedupe data events on `webhookId`, or on a hash of the signed body when `webhookId` is absent. Real Contact/Appointment/Message payloads often omit both fields. Appointment ids are nested under `appointment`. UNINSTALL is not deduped. |
+| Key rotation      | Announced by email/Slack; key is a constant in our code, documented as such                                                                                                                                                                                                                                                                                       |
+| Relevant events   | `ContactCreate`, `ContactUpdate`, `ContactDelete` (scope `contacts.readonly`), `AppointmentCreate/Update/Delete` (`calendars/events.readonly`), `InboundMessage`/`OutboundMessage` (`conversations/message.readonly`), `UNINSTALL` (app lifecycle)                                                                                                                |
+| Raw body          | Cloud Functions expose `req.rawBody` (Buffer) — verify against it, never against a re-serialized `req.body`                                                                                                                                                                                                                                                       |
 
 ---
 

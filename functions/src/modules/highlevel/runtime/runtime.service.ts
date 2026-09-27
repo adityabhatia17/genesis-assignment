@@ -6,6 +6,11 @@ import {
 import { AppError } from '../../../shared/app-error.js';
 import { serializeError, type Logger } from '../../../shared/logger.js';
 import type { ProjectAccessPort } from '../../projects/project-access.js';
+import {
+  RATE_LIMITS,
+  type RateLimiter,
+  type RateLimitRule,
+} from '../../rate-limit/rate-limiter.js';
 import { listCalendars, listEvents } from '../adapters/calendars.adapter.js';
 import { getContact, listContacts } from '../adapters/contacts.adapter.js';
 import { listConversations, listMessages } from '../adapters/conversations.adapter.js';
@@ -37,6 +42,7 @@ export interface RuntimeServiceDeps {
   tokens: TokenPort;
   connections: ConnectionRepo;
   hl: HlHttp;
+  limiter: RateLimiter;
   handlers?: Partial<Record<RuntimeMethodName, RuntimeHandler>>;
 }
 
@@ -56,6 +62,7 @@ export class RuntimeService {
   ): Promise<unknown> {
     const spec = RUNTIME_METHODS[method];
     const params: unknown = spec.params.parse(rawParams);
+    await this.consume(RATE_LIMITS.hlProxy, uid);
 
     const project = await this.d.projects.getOwnedActive(uid, projectId);
     let grant = await this.d.tokens.getAccessGrant(uid);
@@ -93,6 +100,13 @@ export class RuntimeService {
         }
         throw err2 instanceof HlApiError ? hlErrorToAppError(err2) : err2;
       }
+    }
+  }
+
+  private async consume(rule: RateLimitRule, uid: string): Promise<void> {
+    const result = await this.d.limiter.consume(rule, uid);
+    if (!result.allowed) {
+      throw new AppError('RATE_LIMITED', undefined, { retryAfterMs: result.retryAfterMs });
     }
   }
 }

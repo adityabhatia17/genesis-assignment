@@ -13,12 +13,12 @@ export type GenerationStatus =
   | 'failed'
   | 'cancelled'
   | 'interrupted';
-export type TerminalStatus = 'completed' | 'failed' | 'interrupted';
+export type TerminalStatus = 'completed' | 'failed' | 'interrupted' | 'cancelled';
 
 export const isTerminal = (s: GenerationStatus): s is TerminalStatus =>
-  s === 'completed' || s === 'failed' || s === 'interrupted';
+  s === 'completed' || s === 'failed' || s === 'interrupted' || s === 'cancelled';
 export const isActive = (s: GenerationStatus): boolean =>
-  s === 'submitting' || s === 'streaming' || s === 'reconciling';
+  s === 'submitting' || s === 'streaming' || s === 'reconciling' || s === 'cancelling';
 
 export interface FileOpState {
   path: string;
@@ -81,6 +81,7 @@ export type GenerationAction =
   | { type: 'attach'; generationId: string; prompt: string; at: number }
   | { type: 'event'; event: GenerationEvent; at: number }
   | { type: 'cancel-requested' }
+  | { type: 'cancel-failed' }
   | { type: 'stream-lost' }
   | { type: 'reconciled'; snapshot: GenerationSnapshot }
   | { type: 'partial-applied'; result: ApplyResult }
@@ -222,6 +223,14 @@ function reduceEvent(state: GenerationState, e: GenerationEvent, at: number): Ge
         error: e.data.error,
         partial: e.data.partial,
       };
+    case 'generation.cancelled':
+      return {
+        ...base,
+        ...end,
+        status: 'cancelled',
+        error: null,
+        partial: e.data.partial,
+      };
   }
 }
 
@@ -260,6 +269,13 @@ function reduceReconciled(state: GenerationState, g: GenerationSnapshot): Genera
         error: g.error ?? INTERRUPTED,
         partial: g.partial,
       };
+    case 'cancelled':
+      return {
+        ...common,
+        status: 'cancelled',
+        error: null,
+        partial: g.partial,
+      };
   }
 }
 
@@ -293,6 +309,9 @@ export function reduceGeneration(
         state.status === 'reconciling'
         ? { ...state, status: 'cancelling' }
         : state;
+    case 'cancel-failed':
+      if (state.status !== 'cancelling') return state;
+      return { ...state, status: state.origin === 'remote' ? 'reconciling' : 'streaming' };
     case 'stream-lost':
       return isActive(state.status) ? { ...state, status: 'reconciling' } : state;
     case 'reconciled':

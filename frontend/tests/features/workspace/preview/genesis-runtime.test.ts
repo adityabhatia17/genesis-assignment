@@ -1,4 +1,4 @@
-import { RUNTIME_METHOD_NAMES } from '@/contracts/hl-runtime';
+import { RUNTIME_EVENT_NAMES, RUNTIME_METHOD_NAMES } from '@/contracts/hl-runtime';
 import runtimeSource from '@/features/workspace/preview/runtime/genesis-runtime.js?raw';
 
 interface FakePort {
@@ -142,9 +142,19 @@ describe('genesis runtime v1', () => {
     });
   });
 
-  it('rejects event subscriptions while webhooks are out of v1', () => {
+  it('accepts every contract event name', () => {
     const { genesis } = boot();
-    expect(() => genesis.on('contact.created', () => undefined)).toThrow(TypeError);
+    for (const name of RUNTIME_EVENT_NAMES)
+      expect(() => genesis.on(name, () => undefined)).not.toThrow();
+  });
+
+  it('delivers a subscribed HighLevel event and rejects unknown names', () => {
+    const { genesis, port, handshake } = boot();
+    const seen: unknown[] = [];
+    genesis.on('contact.created', (payload) => seen.push(payload));
     expect(() => genesis.on('nope', () => undefined)).toThrow(TypeError);
+    handshake();
+    port.onmessage?.({ data: { type: 'event', name: 'contact.created', payload: { id: 'c9' } } });
+    expect(seen).toEqual([{ id: 'c9' }]);
   });
 });

@@ -26,6 +26,10 @@ describe('describeMessageMeta', () => {
       text: 'Generation failed',
       tone: 'error',
     });
+    expect(describeMessageMeta('assistant', { status: 'cancelled' })).toEqual({
+      text: 'Cancelled',
+      tone: 'warning',
+    });
     expect(describeMessageMeta('user', { status: 'completed' })).toBeNull();
   });
 });

@@ -9,6 +9,7 @@
 ### Task BE-0.1: Root scaffold and Firebase configuration
 
 **Files:**
+
 - Create: `.gitignore`, `.editorconfig`, `.nvmrc`, `.prettierrc.json`, `package.json`, `LICENSE`, `README.md` (stub), `firebase.json`, `.firebaserc`, `firestore.rules` (temporary deny-all), `firestore.indexes.json`, `.env.example`, `.github/workflows/ci.yml` (content in `10-delivery-git-and-deployment.md` §4.1)
 
 **Interfaces:** Produces root scripts (`contracts:sync`, `contracts:check`, `test:rules`, `test:integration`, `emulators`, `deploy`) used by later tasks and CI.
@@ -59,6 +60,7 @@ functions/test/fixtures/hl/raw/
 - [ ] **Step 3: Create `.editorconfig`, `.nvmrc`, `.prettierrc.json`**
 
 `.editorconfig`:
+
 ```ini
 root = true
 
@@ -75,11 +77,13 @@ trim_trailing_whitespace = false
 ```
 
 `.nvmrc`:
+
 ```
 24
 ```
 
 `.prettierrc.json`:
+
 ```json
 {
   "singleQuote": true,
@@ -159,7 +163,10 @@ trim_trailing_whitespace = false
           { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" },
           { "key": "X-Frame-Options", "value": "DENY" },
           { "key": "Strict-Transport-Security", "value": "max-age=31536000; includeSubDomains" },
-          { "key": "Permissions-Policy", "value": "camera=(), microphone=(), geolocation=(), payment=()" }
+          {
+            "key": "Permissions-Policy",
+            "value": "camera=(), microphone=(), geolocation=(), payment=()"
+          }
         ]
       },
       {
@@ -198,6 +205,7 @@ trim_trailing_whitespace = false
 - [ ] **Step 7: Create temporary `firestore.rules` (deny all; BE-2.1 replaces it) and `firestore.indexes.json`**
 
 `firestore.rules`:
+
 ```
 rules_version = '2';
 service cloud.firestore {
@@ -210,6 +218,7 @@ service cloud.firestore {
 ```
 
 `firestore.indexes.json`:
+
 ```json
 {
   "indexes": [
@@ -274,6 +283,7 @@ HL_PIT=                        # sub-account Private Integration Token for scrip
 `LICENSE`: standard MIT text, `Copyright (c) 2026 <Your Name>`.
 
 `README.md`:
+
 ```markdown
 # Genesis — AI-powered HighLevel app builder
 
@@ -294,6 +304,7 @@ git commit -m "chore(repo): scaffold repository, firebase config and env documen
 ### Task BE-0.2: Functions package and tooling
 
 **Files:**
+
 - Create: `functions/package.json`, `functions/tsconfig.json`, `functions/tsconfig.test.json`, `functions/eslint.config.js`, `functions/vitest.config.ts`, `functions/vitest.integration.config.ts`, `functions/.env.example`, `functions/.secret.local.example`, `functions/src/index.ts` (placeholder), `functions/test/unit/smoke.test.ts`
 
 **Interfaces:** Produces npm scripts `build`, `lint`, `typecheck`, `test`, `test:integration`, `test:rules`, `seed:pit`, `spike:oauth`, `record:fixtures`.
@@ -356,6 +367,7 @@ git commit -m "chore(repo): scaffold repository, firebase config and env documen
 - [ ] **Step 2: Create `functions/tsconfig.json` and `functions/tsconfig.test.json`**
 
 `tsconfig.json`:
+
 ```json
 {
   "compilerOptions": {
@@ -384,6 +396,7 @@ git commit -m "chore(repo): scaffold repository, firebase config and env documen
 ```
 
 `tsconfig.test.json`:
+
 ```json
 {
   "extends": "./tsconfig.json",
@@ -418,13 +431,20 @@ export default defineConfig([
       '@typescript-eslint/no-explicit-any': 'error',
       '@typescript-eslint/no-floating-promises': 'error',
       '@typescript-eslint/consistent-type-imports': 'error',
-      '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_', varsIgnorePattern: '^_', ignoreRestSiblings: true }],
+      '@typescript-eslint/no-unused-vars': [
+        'error',
+        { argsIgnorePattern: '^_', varsIgnorePattern: '^_', ignoreRestSiblings: true },
+      ],
       'no-console': 'error',
     },
   },
   {
     files: ['test/**', 'scripts/**', 'evals/**'],
-    rules: { 'no-console': 'off', '@typescript-eslint/no-non-null-assertion': 'off', '@typescript-eslint/unbound-method': 'off' },
+    rules: {
+      'no-console': 'off',
+      '@typescript-eslint/no-non-null-assertion': 'off',
+      '@typescript-eslint/unbound-method': 'off',
+    },
   },
   { files: ['**/*.js', '**/*.mjs'], ...tseslint.configs.disableTypeChecked },
   prettier,
@@ -434,6 +454,7 @@ export default defineConfig([
 - [ ] **Step 4: Create Vitest configs**
 
 `vitest.config.ts`:
+
 ```ts
 import { defineConfig } from 'vitest/config';
 
@@ -444,12 +465,17 @@ export default defineConfig({
     globals: true,
     clearMocks: true,
     restoreMocks: true,
-    coverage: { provider: 'v8', include: ['src/**/*.ts'], exclude: ['src/index.ts', 'src/composition.ts'] },
+    coverage: {
+      provider: 'v8',
+      include: ['src/**/*.ts'],
+      exclude: ['src/index.ts', 'src/composition.ts'],
+    },
   },
 });
 ```
 
 `vitest.integration.config.ts`:
+
 ```ts
 import { defineConfig } from 'vitest/config';
 
@@ -481,11 +507,13 @@ and `functions/.secret.local` with your four secret values (fake values are fine
 - [ ] **Step 6: Placeholder entry and smoke test**
 
 `functions/src/index.ts`:
+
 ```ts
 export {};
 ```
 
 `functions/test/unit/smoke.test.ts`:
+
 ```ts
 describe('toolchain', () => {
   it('runs vitest with TypeScript', () => {
@@ -496,10 +524,13 @@ describe('toolchain', () => {
 ```
 
 `functions/test/helpers/integration-setup.ts`:
+
 ```ts
 // Emulator hosts are injected by `firebase emulators:exec`; fail fast if missing.
 if (!process.env.FIRESTORE_EMULATOR_HOST) {
-  throw new Error('FIRESTORE_EMULATOR_HOST is not set — run via `npm run test:integration` from the repo root');
+  throw new Error(
+    'FIRESTORE_EMULATOR_HOST is not set — run via `npm run test:integration` from the repo root',
+  );
 }
 process.env.GCLOUD_PROJECT ??= 'demo-genesis';
 ```
@@ -511,6 +542,7 @@ cd functions
 npm install
 npm run build && npm run lint && npm run typecheck && npm test
 ```
+
 Expected: `tsc` exits 0; ESLint prints nothing; Vitest reports `1 passed`.
 
 - [ ] **Step 8: Commit**
@@ -525,17 +557,25 @@ git commit -m "chore(functions): add TypeScript, ESLint and Vitest tooling on No
 ### Task BE-0.3: Error catalog contract and shared kernel
 
 **Files:**
+
 - Create: `functions/src/contracts/errors.ts`, `functions/src/shared/app-error.ts`, `functions/src/shared/logger.ts`, `functions/src/shared/hash.ts`, `functions/src/shared/clock.ts`, `functions/src/shared/async.ts`, `functions/src/shared/firebase-admin.ts`, `functions/src/shared/firestore-paths.ts`
 - Test: `functions/test/unit/contracts/errors.test.ts`, `functions/test/unit/shared/app-error.test.ts`, `functions/test/unit/shared/hash.test.ts`, `functions/test/unit/shared/async.test.ts`
 
 **Interfaces:**
+
 - Produces: `ErrorCode`, `ERROR_CODES`, `ERROR_CATALOG`, `httpStatusFor(code)`, `isRetryable(code)`, `defaultMessage(code)`, `ApiErrorBodySchema`; `class AppError(code, message?, details?, options?)`, `isAppError(e)`; `Logger`, `createLogger(base)`; `sha256Hex`, `fileIdForPath`, `uidHash`, `randomToken`, `utf8Bytes`; `Clock`, `systemClock`, `createFakeClock(startMs)`; `sleep`, `withTimeout`, `retry`; `firestore()`, `adminAuth()`; `paths.*`.
 
 - [ ] **Step 1: Write the failing tests**
 
 `test/unit/contracts/errors.test.ts`:
+
 ```ts
-import { ERROR_CATALOG, ERROR_CODES, httpStatusFor, isRetryable } from '../../../src/contracts/errors.js';
+import {
+  ERROR_CATALOG,
+  ERROR_CODES,
+  httpStatusFor,
+  isRetryable,
+} from '../../../src/contracts/errors.js';
 
 describe('error catalog', () => {
   it('has an entry for every code', () => {
@@ -556,6 +596,7 @@ describe('error catalog', () => {
 ```
 
 `test/unit/shared/app-error.test.ts`:
+
 ```ts
 import { AppError, isAppError } from '../../../src/shared/app-error.js';
 
@@ -573,6 +614,7 @@ describe('AppError', () => {
 ```
 
 `test/unit/shared/hash.test.ts`:
+
 ```ts
 import { fileIdForPath, sha256Hex, utf8Bytes } from '../../../src/shared/hash.js';
 
@@ -589,18 +631,28 @@ describe('hash helpers', () => {
 ```
 
 `test/unit/shared/async.test.ts`:
+
 ```ts
 import { retry, withTimeout } from '../../../src/shared/async.js';
 
 describe('async helpers', () => {
   it('retries until success', async () => {
     let n = 0;
-    const out = await retry(async () => { n += 1; if (n < 3) throw new Error('flaky'); return 'ok'; }, { attempts: 3, baseMs: 1 });
+    const out = await retry(
+      async () => {
+        n += 1;
+        if (n < 3) throw new Error('flaky');
+        return 'ok';
+      },
+      { attempts: 3, baseMs: 1 },
+    );
     expect(out).toBe('ok');
     expect(n).toBe(3);
   });
   it('times out', async () => {
-    await expect(withTimeout(new Promise(() => undefined), 10, () => new Error('late'))).rejects.toThrow('late');
+    await expect(
+      withTimeout(new Promise(() => undefined), 10, () => new Error('late')),
+    ).rejects.toThrow('late');
   });
 });
 ```
@@ -613,17 +665,44 @@ describe('async helpers', () => {
 import { z } from 'zod';
 
 export const ERROR_CODES = [
-  'UNAUTHENTICATED', 'FORBIDDEN', 'NOT_FOUND', 'VALIDATION_FAILED', 'PAYLOAD_TOO_LARGE',
-  'PROJECT_NOT_FOUND', 'FILE_NOT_FOUND', 'SNAPSHOT_NOT_FOUND', 'GENERATION_NOT_FOUND',
-  'GENERATION_IN_PROGRESS', 'DUPLICATE_REQUEST', 'FILE_VERSION_CONFLICT', 'SNAPSHOT_ALREADY_CURRENT',
-  'GENERATION_NOT_APPLYABLE', 'PROJECT_LOCATION_MISMATCH',
-  'GENERATION_INVALID_OUTPUT', 'GENERATION_REFUSED', 'GENERATION_TRUNCATED',
-  'GENERATION_TIMEOUT', 'GENERATION_INTERRUPTED', 'CONTEXT_TOO_LARGE',
-  'LLM_RATE_LIMITED', 'LLM_UNAVAILABLE',
-  'HL_NOT_CONNECTED', 'HL_REAUTH_REQUIRED', 'HL_SCOPE_MISSING', 'HL_FORBIDDEN', 'HL_NOT_FOUND',
-  'HL_BAD_REQUEST', 'HL_RATE_LIMITED', 'HL_UNAVAILABLE',
-  'OAUTH_STATE_INVALID', 'OAUTH_DENIED', 'OAUTH_EXCHANGE_FAILED', 'OAUTH_NOT_LOCATION_TOKEN',
-  'PREVIEW_LIMIT', 'PREVIEW_TIMEOUT', 'UNKNOWN_METHOD',
+  'UNAUTHENTICATED',
+  'FORBIDDEN',
+  'NOT_FOUND',
+  'VALIDATION_FAILED',
+  'PAYLOAD_TOO_LARGE',
+  'PROJECT_NOT_FOUND',
+  'FILE_NOT_FOUND',
+  'SNAPSHOT_NOT_FOUND',
+  'GENERATION_NOT_FOUND',
+  'GENERATION_IN_PROGRESS',
+  'DUPLICATE_REQUEST',
+  'FILE_VERSION_CONFLICT',
+  'SNAPSHOT_ALREADY_CURRENT',
+  'GENERATION_NOT_APPLYABLE',
+  'PROJECT_LOCATION_MISMATCH',
+  'GENERATION_INVALID_OUTPUT',
+  'GENERATION_REFUSED',
+  'GENERATION_TRUNCATED',
+  'GENERATION_TIMEOUT',
+  'GENERATION_INTERRUPTED',
+  'CONTEXT_TOO_LARGE',
+  'LLM_RATE_LIMITED',
+  'LLM_UNAVAILABLE',
+  'HL_NOT_CONNECTED',
+  'HL_REAUTH_REQUIRED',
+  'HL_SCOPE_MISSING',
+  'HL_FORBIDDEN',
+  'HL_NOT_FOUND',
+  'HL_BAD_REQUEST',
+  'HL_RATE_LIMITED',
+  'HL_UNAVAILABLE',
+  'OAUTH_STATE_INVALID',
+  'OAUTH_DENIED',
+  'OAUTH_EXCHANGE_FAILED',
+  'OAUTH_NOT_LOCATION_TOKEN',
+  'PREVIEW_LIMIT',
+  'PREVIEW_TIMEOUT',
+  'UNKNOWN_METHOD',
   'INTERNAL',
 ] as const;
 
@@ -646,33 +725,122 @@ export const ERROR_CATALOG: Readonly<Record<ErrorCode, ErrorSpec>> = {
   FILE_NOT_FOUND: { status: 404, retryable: false, message: 'File not found.' },
   SNAPSHOT_NOT_FOUND: { status: 404, retryable: false, message: 'Snapshot not found.' },
   GENERATION_NOT_FOUND: { status: 404, retryable: false, message: 'Generation not found.' },
-  GENERATION_IN_PROGRESS: { status: 409, retryable: true, message: 'A generation is already running for this project.' },
-  DUPLICATE_REQUEST: { status: 409, retryable: false, message: 'This request was already submitted.' },
-  FILE_VERSION_CONFLICT: { status: 409, retryable: false, message: 'This file changed since you opened it.' },
-  SNAPSHOT_ALREADY_CURRENT: { status: 409, retryable: false, message: "That snapshot is already the current version." },
-  GENERATION_NOT_APPLYABLE: { status: 409, retryable: false, message: "There's nothing to apply from this generation." },
-  PROJECT_LOCATION_MISMATCH: { status: 409, retryable: false, message: 'This project was built for a different HighLevel location. Reconnect that location or create a new project.' },
-  GENERATION_INVALID_OUTPUT: { status: 422, retryable: true, message: "The AI response couldn't be used safely." },
-  GENERATION_REFUSED: { status: 422, retryable: false, message: 'The AI declined this request. Try rephrasing.' },
-  GENERATION_TRUNCATED: { status: 422, retryable: true, message: 'The response was cut off before finishing.' },
-  GENERATION_TIMEOUT: { status: 504, retryable: true, message: 'Generation took too long and was stopped.' },
-  GENERATION_INTERRUPTED: { status: 503, retryable: true, message: 'The connection was lost during generation.' },
-  CONTEXT_TOO_LARGE: { status: 413, retryable: false, message: 'The project is too large to send to the AI.' },
-  LLM_RATE_LIMITED: { status: 429, retryable: true, message: 'The AI service is busy — try again shortly.' },
-  LLM_UNAVAILABLE: { status: 503, retryable: true, message: 'The AI service is unavailable right now.' },
-  HL_NOT_CONNECTED: { status: 409, retryable: false, message: 'Connect HighLevel to use live data.' },
-  HL_REAUTH_REQUIRED: { status: 409, retryable: false, message: 'Your HighLevel connection expired — reconnect.' },
-  HL_SCOPE_MISSING: { status: 403, retryable: false, message: "Genesis isn't allowed to do that in HighLevel. Reconnect to grant access." },
+  GENERATION_IN_PROGRESS: {
+    status: 409,
+    retryable: true,
+    message: 'A generation is already running for this project.',
+  },
+  DUPLICATE_REQUEST: {
+    status: 409,
+    retryable: false,
+    message: 'This request was already submitted.',
+  },
+  FILE_VERSION_CONFLICT: {
+    status: 409,
+    retryable: false,
+    message: 'This file changed since you opened it.',
+  },
+  SNAPSHOT_ALREADY_CURRENT: {
+    status: 409,
+    retryable: false,
+    message: 'That snapshot is already the current version.',
+  },
+  GENERATION_NOT_APPLYABLE: {
+    status: 409,
+    retryable: false,
+    message: "There's nothing to apply from this generation.",
+  },
+  PROJECT_LOCATION_MISMATCH: {
+    status: 409,
+    retryable: false,
+    message:
+      'This project was built for a different HighLevel location. Reconnect that location or create a new project.',
+  },
+  GENERATION_INVALID_OUTPUT: {
+    status: 422,
+    retryable: true,
+    message: "The AI response couldn't be used safely.",
+  },
+  GENERATION_REFUSED: {
+    status: 422,
+    retryable: false,
+    message: 'The AI declined this request. Try rephrasing.',
+  },
+  GENERATION_TRUNCATED: {
+    status: 422,
+    retryable: true,
+    message: 'The response was cut off before finishing.',
+  },
+  GENERATION_TIMEOUT: {
+    status: 504,
+    retryable: true,
+    message: 'Generation took too long and was stopped.',
+  },
+  GENERATION_INTERRUPTED: {
+    status: 503,
+    retryable: true,
+    message: 'The connection was lost during generation.',
+  },
+  CONTEXT_TOO_LARGE: {
+    status: 413,
+    retryable: false,
+    message: 'The project is too large to send to the AI.',
+  },
+  LLM_RATE_LIMITED: {
+    status: 429,
+    retryable: true,
+    message: 'The AI service is busy — try again shortly.',
+  },
+  LLM_UNAVAILABLE: {
+    status: 503,
+    retryable: true,
+    message: 'The AI service is unavailable right now.',
+  },
+  HL_NOT_CONNECTED: {
+    status: 409,
+    retryable: false,
+    message: 'Connect HighLevel to use live data.',
+  },
+  HL_REAUTH_REQUIRED: {
+    status: 409,
+    retryable: false,
+    message: 'Your HighLevel connection expired — reconnect.',
+  },
+  HL_SCOPE_MISSING: {
+    status: 403,
+    retryable: false,
+    message: "Genesis isn't allowed to do that in HighLevel. Reconnect to grant access.",
+  },
   HL_FORBIDDEN: { status: 403, retryable: false, message: 'HighLevel refused this request.' },
   HL_NOT_FOUND: { status: 404, retryable: false, message: "That HighLevel record wasn't found." },
   HL_BAD_REQUEST: { status: 422, retryable: false, message: 'HighLevel rejected the request.' },
-  HL_RATE_LIMITED: { status: 429, retryable: true, message: 'HighLevel is rate limiting requests — try again shortly.' },
+  HL_RATE_LIMITED: {
+    status: 429,
+    retryable: true,
+    message: 'HighLevel is rate limiting requests — try again shortly.',
+  },
   HL_UNAVAILABLE: { status: 502, retryable: true, message: 'HighLevel is unavailable right now.' },
-  OAUTH_STATE_INVALID: { status: 400, retryable: false, message: 'The connection link expired. Please try again.' },
+  OAUTH_STATE_INVALID: {
+    status: 400,
+    retryable: false,
+    message: 'The connection link expired. Please try again.',
+  },
   OAUTH_DENIED: { status: 400, retryable: false, message: 'Connection was cancelled.' },
-  OAUTH_EXCHANGE_FAILED: { status: 502, retryable: true, message: "HighLevel didn't accept the connection. Please try again." },
-  OAUTH_NOT_LOCATION_TOKEN: { status: 400, retryable: false, message: 'Please choose a sub-account (location), not an agency.' },
-  PREVIEW_LIMIT: { status: 429, retryable: true, message: 'Too many HighLevel calls from the preview.' },
+  OAUTH_EXCHANGE_FAILED: {
+    status: 502,
+    retryable: true,
+    message: "HighLevel didn't accept the connection. Please try again.",
+  },
+  OAUTH_NOT_LOCATION_TOKEN: {
+    status: 400,
+    retryable: false,
+    message: 'Please choose a sub-account (location), not an agency.',
+  },
+  PREVIEW_LIMIT: {
+    status: 429,
+    retryable: true,
+    message: 'Too many HighLevel calls from the preview.',
+  },
   PREVIEW_TIMEOUT: { status: 504, retryable: true, message: 'HighLevel call timed out.' },
   UNKNOWN_METHOD: { status: 400, retryable: false, message: 'Unknown SDK method.' },
   INTERNAL: { status: 500, retryable: true, message: 'Something went wrong. Please try again.' },
@@ -705,7 +873,12 @@ export class AppError extends Error {
   readonly retryable: boolean;
   readonly details: Readonly<Record<string, unknown>> | undefined;
 
-  constructor(code: ErrorCode, message?: string, details?: Record<string, unknown>, options?: { cause?: unknown }) {
+  constructor(
+    code: ErrorCode,
+    message?: string,
+    details?: Record<string, unknown>,
+    options?: { cause?: unknown },
+  ) {
     super(message ?? defaultMessage(code), options);
     this.name = 'AppError';
     this.code = code;
@@ -721,6 +894,7 @@ export const isAppError = (e: unknown): e is AppError => e instanceof AppError;
 - [ ] **Step 5: Implement `src/shared/logger.ts`, `hash.ts`, `clock.ts`, `async.ts`**
 
 `logger.ts`:
+
 ```ts
 import * as fnLogger from 'firebase-functions/logger';
 
@@ -736,9 +910,11 @@ export interface Logger {
 }
 
 export function createLogger(base: LogFields = {}): Logger {
-  const emit = (level: Level) => (message: string, fields: LogFields = {}) => {
-    fnLogger[level](message, { ...base, ...fields });
-  };
+  const emit =
+    (level: Level) =>
+    (message: string, fields: LogFields = {}) => {
+      fnLogger[level](message, { ...base, ...fields });
+    };
   return {
     debug: emit('debug'),
     info: emit('info'),
@@ -756,10 +932,12 @@ export function serializeError(err: unknown): LogFields {
 ```
 
 `hash.ts`:
+
 ```ts
 import { createHash, randomBytes } from 'node:crypto';
 
-export const sha256Hex = (input: string | Buffer): string => createHash('sha256').update(input).digest('hex');
+export const sha256Hex = (input: string | Buffer): string =>
+  createHash('sha256').update(input).digest('hex');
 export const fileIdForPath = (path: string): string => sha256Hex(path).slice(0, 20);
 export const uidHash = (uid: string): string => sha256Hex(uid).slice(0, 12);
 export const randomToken = (bytes = 32): string => randomBytes(bytes).toString('base64url');
@@ -767,6 +945,7 @@ export const utf8Bytes = (s: string): number => Buffer.byteLength(s, 'utf8');
 ```
 
 `clock.ts`:
+
 ```ts
 export interface Clock {
   now(): number; // epoch milliseconds
@@ -781,23 +960,48 @@ export interface FakeClock extends Clock {
 
 export function createFakeClock(startMs: number): FakeClock {
   let t = startMs;
-  return { now: () => t, advance: (ms) => { t += ms; }, set: (ms) => { t = ms; } };
+  return {
+    now: () => t,
+    advance: (ms) => {
+      t += ms;
+    },
+    set: (ms) => {
+      t = ms;
+    },
+  };
 }
 ```
 
 `async.ts`:
+
 ```ts
 export function sleep(ms: number, signal?: AbortSignal): Promise<void> {
   return new Promise((resolve, reject) => {
-    if (signal?.aborted) { reject(signal.reason as Error); return; }
+    if (signal?.aborted) {
+      reject(signal.reason as Error);
+      return;
+    }
     const timer = setTimeout(resolve, ms);
-    signal?.addEventListener('abort', () => { clearTimeout(timer); reject(signal.reason as Error); }, { once: true });
+    signal?.addEventListener(
+      'abort',
+      () => {
+        clearTimeout(timer);
+        reject(signal.reason as Error);
+      },
+      { once: true },
+    );
   });
 }
 
-export async function withTimeout<T>(p: Promise<T>, ms: number, onTimeout: () => Error): Promise<T> {
+export async function withTimeout<T>(
+  p: Promise<T>,
+  ms: number,
+  onTimeout: () => Error,
+): Promise<T> {
   let timer: NodeJS.Timeout | undefined;
-  const timeout = new Promise<never>((_, reject) => { timer = setTimeout(() => reject(onTimeout()), ms); });
+  const timeout = new Promise<never>((_, reject) => {
+    timer = setTimeout(() => reject(onTimeout()), ms);
+  });
   try {
     return await Promise.race([p, timeout]);
   } finally {
@@ -820,7 +1024,9 @@ export async function retry<T>(fn: () => Promise<T>, opts: RetryOptions): Promis
     } catch (err) {
       lastErr = err;
       if (i === opts.attempts - 1 || (opts.shouldRetry && !opts.shouldRetry(err))) break;
-      const delay = Math.min(opts.maxMs ?? 2_000, opts.baseMs * 2 ** i) + Math.floor(Math.random() * opts.baseMs);
+      const delay =
+        Math.min(opts.maxMs ?? 2_000, opts.baseMs * 2 ** i) +
+        Math.floor(Math.random() * opts.baseMs);
       await sleep(delay);
     }
   }
@@ -831,6 +1037,7 @@ export async function retry<T>(fn: () => Promise<T>, opts: RetryOptions): Promis
 - [ ] **Step 6: Implement `src/shared/firebase-admin.ts` and `src/shared/firestore-paths.ts`**
 
 `firebase-admin.ts`:
+
 ```ts
 import { getApps, initializeApp, type App } from 'firebase-admin/app';
 import { getAuth, type Auth } from 'firebase-admin/auth';
@@ -852,6 +1059,7 @@ export const adminAuth = (): Auth => getAuth(adminApp());
 ```
 
 `firestore-paths.ts`:
+
 ```ts
 const project = (uid: string, pid: string) => `users/${uid}/projects/${pid}`;
 
@@ -865,8 +1073,10 @@ export const paths = {
   messages: (uid: string, pid: string) => `${project(uid, pid)}/messages`,
   generations: (uid: string, pid: string) => `${project(uid, pid)}/generations`,
   generation: (uid: string, pid: string, gid: string) => `${project(uid, pid)}/generations/${gid}`,
-  staged: (uid: string, pid: string, gid: string) => `${project(uid, pid)}/generations/${gid}/staged`,
-  rawArtifact: (uid: string, pid: string, gid: string) => `${project(uid, pid)}/generations/${gid}/artifacts/raw`,
+  staged: (uid: string, pid: string, gid: string) =>
+    `${project(uid, pid)}/generations/${gid}/staged`,
+  rawArtifact: (uid: string, pid: string, gid: string) =>
+    `${project(uid, pid)}/generations/${gid}/artifacts/raw`,
   snapshots: (uid: string, pid: string) => `${project(uid, pid)}/snapshots`,
   snapshot: (uid: string, pid: string, sid: string) => `${project(uid, pid)}/snapshots/${sid}`,
   blob: (uid: string, pid: string, sha: string) => `${project(uid, pid)}/blobs/${sha}`,
@@ -890,10 +1100,12 @@ git commit -m "feat(functions): add error catalog contract and shared kernel"
 ### Task BE-0.4: Parameters and runtime configuration
 
 **Files:**
+
 - Create: `functions/src/config/params.ts`, `functions/src/config/runtime-config.ts`
 - Test: `functions/test/unit/config/runtime-config.test.ts`
 
 **Interfaces:**
+
 - Produces: secret params `ANTHROPIC_API_KEY`, `HL_CLIENT_ID`, `HL_CLIENT_SECRET`, `TOKEN_ENCRYPTION_KEY`; string params (URLs, model, effort, scopes, provider); `RuntimeConfig` type; `parseRuntimeConfig(raw)` (pure, tested); `loadRuntimeConfig()` (reads params; call only inside a request); `Secrets` type; `loadSecrets({ anthropic })`; `DEFAULT_HL_SCOPES` (the six read scopes).
 
 - [ ] **Step 1: Write the failing test**
@@ -924,7 +1136,9 @@ describe('parseRuntimeConfig', () => {
     expect(c.hlExtendedMethods).toBe(false);
   });
   it('rejects the word highlevel in the redirect URI', () => {
-    expect(() => parseRuntimeConfig({ ...raw, HL_REDIRECT_URI: 'https://genesis-highlevel.web.app/cb' })).toThrow(/highlevel/i);
+    expect(() =>
+      parseRuntimeConfig({ ...raw, HL_REDIRECT_URI: 'https://genesis-highlevel.web.app/cb' }),
+    ).toThrow(/highlevel/i);
   });
   it('rejects unknown effort', () => {
     expect(() => parseRuntimeConfig({ ...raw, ANTHROPIC_EFFORT: 'ultra' })).toThrow();
@@ -961,7 +1175,9 @@ export const APP_BASE_URL = defineString('APP_BASE_URL');
 export const ALLOWED_ORIGINS = defineString('ALLOWED_ORIGINS');
 export const HL_REDIRECT_URI = defineString('HL_REDIRECT_URI');
 export const HL_SCOPES = defineString('HL_SCOPES', { default: DEFAULT_HL_SCOPES });
-export const HL_API_BASE_URL = defineString('HL_API_BASE_URL', { default: 'https://services.leadconnectorhq.com' });
+export const HL_API_BASE_URL = defineString('HL_API_BASE_URL', {
+  default: 'https://services.leadconnectorhq.com',
+});
 export const HL_AUTHORIZE_URL = defineString('HL_AUTHORIZE_URL', {
   default: 'https://marketplace.gohighlevel.com/v2/oauth/chooselocation',
 });
@@ -980,14 +1196,25 @@ import { z } from 'zod';
 import * as p from './params.js';
 
 const bool = z.enum(['true', 'false']).transform((v) => v === 'true');
-const csv = z.string().transform((s) => s.split(',').map((x) => x.trim()).filter(Boolean));
-const spaced = z.string().transform((s) => s.split(/\s+/).map((x) => x.trim()).filter(Boolean));
+const csv = z.string().transform((s) =>
+  s
+    .split(',')
+    .map((x) => x.trim())
+    .filter(Boolean),
+);
+const spaced = z.string().transform((s) =>
+  s
+    .split(/\s+/)
+    .map((x) => x.trim())
+    .filter(Boolean),
+);
 
 const RawSchema = z.object({
   APP_BASE_URL: z.url(),
   ALLOWED_ORIGINS: csv.pipe(z.array(z.string().min(1)).min(1)),
   HL_REDIRECT_URI: z.url().refine((u) => !/highlevel|leadconnector|ghl/i.test(u), {
-    message: 'HL_REDIRECT_URI must not contain "highlevel", "leadconnector" or "ghl" (HighLevel rejects it)',
+    message:
+      'HL_REDIRECT_URI must not contain "highlevel", "leadconnector" or "ghl" (HighLevel rejects it)',
   }),
   HL_SCOPES: spaced.pipe(z.array(z.string()).min(1)),
   HL_API_BASE_URL: z.url(),
@@ -1074,16 +1301,19 @@ git commit -m "feat(functions): add typed params and validated runtime config"
 ### Task BE-0.5: HTTP app factory, middleware, health, function exports
 
 **Files:**
+
 - Create: `functions/src/http/respond.ts`, `functions/src/http/define-handler.ts`, `functions/src/http/middleware/request-context.ts`, `functions/src/http/middleware/cors.ts`, `functions/src/http/middleware/require-auth.ts`, `functions/src/http/middleware/no-store.ts`, `functions/src/http/middleware/error-handler.ts`, `functions/src/http/create-http-app.ts`, `functions/src/composition.ts`
 - Modify: `functions/src/index.ts`
 - Test: `functions/test/unit/http/create-http-app.test.ts`
 
 **Interfaces:**
-- Produces: `createHttpApp(opts: HttpAppOptions): Express` with `HttpAppOptions = { service: 'api' | 'generate'; version: string; allowedOrigins: readonly string[]; logger: Logger; verifyIdToken: VerifyIdToken; publicRouters?: Router[]; authedRouters?: Router[] }`; `VerifyIdToken = (token: string) => Promise<{ uid: string; email?: string | undefined }>`; `defineHandler(schemas, fn)`; `requireUid(req): string`; `sendData(res, data, status?)`; `req.ctx: { requestId: string; startedAt: number; log: Logger }`; `req.auth?: { uid: string; email?: string }`; composition `getApiApp()`, `getGenerateApp()`. Per-route Cloud Function rate limits are out of v1 (R-B4).
+
+- Produces: `createHttpApp(opts: HttpAppOptions): Express` with `HttpAppOptions = { service: 'api' | 'generate'; version: string; allowedOrigins: readonly string[]; logger: Logger; verifyIdToken: VerifyIdToken; publicRouters?: Router[]; authedRouters?: Router[] }`; `VerifyIdToken = (token: string) => Promise<{ uid: string; email?: string | undefined }>`; `defineHandler(schemas, fn)`; `requireUid(req): string`; `sendData(res, data, status?)`; `req.ctx: { requestId: string; startedAt: number; log: Logger }`; `req.auth?: { uid: string; email?: string }`; composition `getApiApp()`, `getGenerateApp()`. Per-route Cloud Function rate limits are implemented (R-B4) in `modules/rate-limit`.
 
 - [ ] **Step 1: Write the failing tests**
 
 `test/unit/http/create-http-app.test.ts`:
+
 ```ts
 import express from 'express';
 import request from 'supertest';
@@ -1096,15 +1326,27 @@ import { createLogger } from '../../../src/shared/logger.js';
 
 function makeApp() {
   const authed = express.Router();
-  authed.get('/v1/me', (req, res) => { sendData(res, { uid: req.auth?.uid }); });
-  authed.post('/v1/echo', defineHandler({ body: z.strictObject({ n: z.number() }) }, (input, _req, res) => { sendData(res, { n: input.body.n }); }));
-  authed.get('/v1/boom', () => { throw new AppError('FILE_VERSION_CONFLICT', undefined, { currentVersion: 3 }); });
+  authed.get('/v1/me', (req, res) => {
+    sendData(res, { uid: req.auth?.uid });
+  });
+  authed.post(
+    '/v1/echo',
+    defineHandler({ body: z.strictObject({ n: z.number() }) }, (input, _req, res) => {
+      sendData(res, { n: input.body.n });
+    }),
+  );
+  authed.get('/v1/boom', () => {
+    throw new AppError('FILE_VERSION_CONFLICT', undefined, { currentVersion: 3 });
+  });
   return createHttpApp({
     service: 'api',
     version: 'test',
     allowedOrigins: ['https://app.example'],
     logger: createLogger({ test: true }),
-    verifyIdToken: async (t) => { if (t !== 'good') throw new Error('bad'); return { uid: 'u1' }; },
+    verifyIdToken: async (t) => {
+      if (t !== 'good') throw new Error('bad');
+      return { uid: 'u1' };
+    },
     authedRouters: [authed],
   });
 }
@@ -1132,8 +1374,14 @@ describe('createHttpApp', () => {
   it('maps AppError and zod errors', async () => {
     const boom = await request(makeApp()).get('/v1/boom').set('Authorization', 'Bearer good');
     expect(boom.status).toBe(409);
-    expect(boom.body.error).toMatchObject({ code: 'FILE_VERSION_CONFLICT', details: { currentVersion: 3 } });
-    const invalid = await request(makeApp()).post('/v1/echo').set('Authorization', 'Bearer good').send({ n: 'x' });
+    expect(boom.body.error).toMatchObject({
+      code: 'FILE_VERSION_CONFLICT',
+      details: { currentVersion: 3 },
+    });
+    const invalid = await request(makeApp())
+      .post('/v1/echo')
+      .set('Authorization', 'Bearer good')
+      .send({ n: 'x' });
     expect(invalid.status).toBe(400);
     expect(invalid.body.error.code).toBe('VALIDATION_FAILED');
   });
@@ -1143,10 +1391,16 @@ describe('createHttpApp', () => {
     expect(res.body.error.code).toBe('NOT_FOUND');
   });
   it('answers CORS preflight only for allowed origins', async () => {
-    const ok = await request(makeApp()).options('/v1/me').set('Origin', 'https://app.example').set('Access-Control-Request-Method', 'GET');
+    const ok = await request(makeApp())
+      .options('/v1/me')
+      .set('Origin', 'https://app.example')
+      .set('Access-Control-Request-Method', 'GET');
     expect(ok.status).toBe(204);
     expect(ok.headers['access-control-allow-origin']).toBe('https://app.example');
-    const denied = await request(makeApp()).options('/v1/me').set('Origin', 'https://evil.example').set('Access-Control-Request-Method', 'GET');
+    const denied = await request(makeApp())
+      .options('/v1/me')
+      .set('Origin', 'https://evil.example')
+      .set('Access-Control-Request-Method', 'GET');
     expect(denied.headers['access-control-allow-origin']).toBeUndefined();
   });
 });
@@ -1157,6 +1411,7 @@ describe('createHttpApp', () => {
 - [ ] **Step 3: Implement `respond.ts`, `define-handler.ts`, middleware**
 
 `src/http/respond.ts`:
+
 ```ts
 import type { Response } from 'express';
 
@@ -1166,6 +1421,7 @@ export function sendData<T>(res: Response, data: T, status = 200): void {
 ```
 
 `src/http/middleware/request-context.ts`:
+
 ```ts
 import { randomUUID } from 'node:crypto';
 import type { RequestHandler } from 'express';
@@ -1194,7 +1450,11 @@ export function requestContext(logger: Logger): RequestHandler {
   return (req, res, next) => {
     const incoming = req.get('x-request-id');
     const requestId = incoming && REQUEST_ID_RE.test(incoming) ? incoming : randomUUID();
-    req.ctx = { requestId, startedAt: Date.now(), log: logger.child({ requestId, route: `${req.method} ${req.path}` }) };
+    req.ctx = {
+      requestId,
+      startedAt: Date.now(),
+      log: logger.child({ requestId, route: `${req.method} ${req.path}` }),
+    };
     res.setHeader('X-Request-Id', requestId);
     next();
   };
@@ -1202,6 +1462,7 @@ export function requestContext(logger: Logger): RequestHandler {
 ```
 
 `src/http/middleware/cors.ts`:
+
 ```ts
 import cors from 'cors';
 import type { RequestHandler } from 'express';
@@ -1209,7 +1470,9 @@ import type { RequestHandler } from 'express';
 export function corsMiddleware(allowedOrigins: readonly string[]): RequestHandler {
   const allowed = new Set(allowedOrigins);
   return cors({
-    origin: (origin, cb) => { cb(null, !origin || allowed.has(origin)); },
+    origin: (origin, cb) => {
+      cb(null, !origin || allowed.has(origin));
+    },
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Authorization', 'Content-Type', 'Accept', 'X-Request-Id'],
     exposedHeaders: ['X-Request-Id'],
@@ -1221,6 +1484,7 @@ export function corsMiddleware(allowedOrigins: readonly string[]): RequestHandle
 ```
 
 `src/http/middleware/no-store.ts`:
+
 ```ts
 import type { RequestHandler } from 'express';
 
@@ -1231,6 +1495,7 @@ export const noStore: RequestHandler = (_req, res, next) => {
 ```
 
 `src/http/middleware/require-auth.ts`:
+
 ```ts
 import type { RequestHandler } from 'express';
 import { AppError } from '../../shared/app-error.js';
@@ -1254,6 +1519,7 @@ export function requireAuth(verify: VerifyIdToken): RequestHandler {
 ```
 
 `src/http/middleware/error-handler.ts`:
+
 ```ts
 import type { ErrorRequestHandler, RequestHandler } from 'express';
 import { ZodError } from 'zod';
@@ -1266,7 +1532,8 @@ export function toAppError(err: unknown): AppError {
     const issues = err.issues.map((i) => ({ path: i.path.join('.'), message: i.message }));
     return new AppError('VALIDATION_FAILED', undefined, { issues });
   }
-  if (err instanceof SyntaxError && 'body' in err) return new AppError('VALIDATION_FAILED', 'Malformed JSON body');
+  if (err instanceof SyntaxError && 'body' in err)
+    return new AppError('VALIDATION_FAILED', 'Malformed JSON body');
   return new AppError('INTERNAL', undefined, undefined, { cause: err });
 }
 
@@ -1277,14 +1544,16 @@ export const notFound: RequestHandler = () => {
 export const errorHandler: ErrorRequestHandler = (err, req, res, _next) => {
   const appErr = toAppError(err);
   const log = req.ctx.log;
-  if (appErr.status >= 500) log.error('request.failed', { code: appErr.code, error: serializeError(appErr.cause ?? err) });
+  if (appErr.status >= 500)
+    log.error('request.failed', { code: appErr.code, error: serializeError(appErr.cause ?? err) });
   else log.warn('request.rejected', { code: appErr.code });
   if (res.headersSent) {
     res.end();
     return;
   }
   const retryAfterMs = appErr.details?.['retryAfterMs'];
-  if (typeof retryAfterMs === 'number') res.setHeader('Retry-After', String(Math.ceil(retryAfterMs / 1000)));
+  if (typeof retryAfterMs === 'number')
+    res.setHeader('Retry-After', String(Math.ceil(retryAfterMs / 1000)));
   res.status(appErr.status).json({
     error: {
       code: appErr.code,
@@ -1298,6 +1567,7 @@ export const errorHandler: ErrorRequestHandler = (err, req, res, _next) => {
 ```
 
 `src/http/define-handler.ts`:
+
 ```ts
 import type { Request, RequestHandler, Response } from 'express';
 import type { z } from 'zod';
@@ -1338,7 +1608,7 @@ export function defineHandler<S extends RouteSchemas>(
 }
 ```
 
-- [ ] **Step 4: Skip Cloud Function rate limits** — assignment bonus R-B4 is out of v1. Do not add `modules/rate-limit`, `middleware/rate-limit.ts`, or Firestore `rateLimits`.
+- [x] **Step 4: Cloud Function rate limits** — implemented in `modules/rate-limit`, `middleware/rate-limit.ts`, and Firestore `rateLimits` (R-B4).
 
 - [ ] **Step 5: Implement `src/http/create-http-app.ts`**
 
@@ -1389,6 +1659,7 @@ export function createHttpApp(opts: HttpAppOptions): Express {
 - [ ] **Step 6: Composition root and exports**
 
 `src/composition.ts` (grows in later phases — each phase adds its routers here):
+
 ```ts
 import type { Express, Router } from 'express';
 import { loadRuntimeConfig, type RuntimeConfig } from './config/runtime-config.js';
@@ -1411,7 +1682,15 @@ function buildApiApp(config: RuntimeConfig): Express {
   const publicRouters: Router[] = [];
   const authedRouters: Router[] = [];
   // Phase BE-3+ registers routers here.
-  return createHttpApp({ service: 'api', version: VERSION, allowedOrigins: config.allowedOrigins, logger, verifyIdToken, publicRouters, authedRouters });
+  return createHttpApp({
+    service: 'api',
+    version: VERSION,
+    allowedOrigins: config.allowedOrigins,
+    logger,
+    verifyIdToken,
+    publicRouters,
+    authedRouters,
+  });
 }
 
 function buildGenerateApp(config: RuntimeConfig): Express {
@@ -1419,7 +1698,15 @@ function buildGenerateApp(config: RuntimeConfig): Express {
   const publicRouters: Router[] = [];
   const authedRouters: Router[] = [];
   // BE-0.6 adds the SSE smoke route; BE-6.6 adds the generation route.
-  return createHttpApp({ service: 'generate', version: VERSION, allowedOrigins: config.allowedOrigins, logger, verifyIdToken, publicRouters, authedRouters });
+  return createHttpApp({
+    service: 'generate',
+    version: VERSION,
+    allowedOrigins: config.allowedOrigins,
+    logger,
+    verifyIdToken,
+    publicRouters,
+    authedRouters,
+  });
 }
 
 export function getApiApp(): Express {
@@ -1434,6 +1721,7 @@ export function getGenerateApp(): Express {
 ```
 
 `src/index.ts`:
+
 ```ts
 import { onRequest } from 'firebase-functions/https';
 import { setGlobalOptions } from 'firebase-functions/options';
@@ -1459,7 +1747,9 @@ export const api = onRequest(
     invoker: 'public',
     secrets: [HL_CLIENT_ID, HL_CLIENT_SECRET, TOKEN_ENCRYPTION_KEY],
   },
-  (req, res) => { getApiApp()(req, res); },
+  (req, res) => {
+    getApiApp()(req, res);
+  },
 );
 
 export const generate = onRequest(
@@ -1472,7 +1762,9 @@ export const generate = onRequest(
     invoker: 'public',
     secrets: [ANTHROPIC_API_KEY, HL_CLIENT_ID, HL_CLIENT_SECRET, TOKEN_ENCRYPTION_KEY],
   },
-  (req, res) => { getGenerateApp()(req, res); },
+  (req, res) => {
+    getGenerateApp()(req, res);
+  },
 );
 ```
 
@@ -1490,6 +1782,7 @@ git commit -m "feat(functions): add HTTP app factory, middleware, rate limiter a
 ### Task BE-0.6: Emulators, first deploy, production SSE smoke test (spike S12)
 
 **Files:**
+
 - Create: `functions/src/http/sse-smoke.routes.ts`
 - Modify: `functions/src/composition.ts` (mount smoke route when `config.sseSmokeEnabled`)
 
@@ -1498,6 +1791,7 @@ git commit -m "feat(functions): add HTTP app factory, middleware, rate limiter a
 - [ ] **Step 1: Implement the smoke route**
 
 `src/http/sse-smoke.routes.ts`:
+
 ```ts
 import express, { type Router } from 'express';
 
@@ -1514,8 +1808,13 @@ export function sseSmokeRouter(): Router {
     let n = 0;
     const timer = setInterval(() => {
       n += 1;
-      res.write(`event: tick\nid: ${n}\ndata: ${JSON.stringify({ n, at: new Date().toISOString() })}\n\n`);
-      if (n === 5) { clearInterval(timer); res.end(); }
+      res.write(
+        `event: tick\nid: ${n}\ndata: ${JSON.stringify({ n, at: new Date().toISOString() })}\n\n`,
+      );
+      if (n === 5) {
+        clearInterval(timer);
+        res.end();
+      }
     }, 1_000);
     req.on('close', () => clearInterval(timer));
   });
@@ -1532,11 +1831,14 @@ cd /Users/mac/Developer/genesis
 npm --prefix functions run build
 firebase emulators:start --only functions,firestore,auth
 ```
+
 In another terminal:
+
 ```bash
 curl -s http://127.0.0.1:5001/genesis-builder-7f3a/us-central1/api/v1/health
 curl -N http://127.0.0.1:5001/genesis-builder-7f3a/us-central1/generate/v1/health/stream
 ```
+
 Expected: health JSON `{"data":{"ok":true,"service":"api","version":"dev"}}`; the stream prints one `event: tick` per second (5 total).
 
 - [ ] **Step 3: Set production secrets and params, deploy functions**
@@ -1550,6 +1852,7 @@ firebase functions:secrets:set TOKEN_ENCRYPTION_KEY
 cp functions/.env.example functions/.env.genesis-builder-7f3a   # edit values; set SSE_SMOKE_ENABLED=true for today
 firebase deploy --only functions
 ```
+
 Expected: `✔ functions[api(us-central1)] Successful create operation.` and the same for `generate`; the CLI prints both URLs.
 
 - [ ] **Step 4: Verify production streaming (spike S12)**
@@ -1558,6 +1861,7 @@ Expected: `✔ functions[api(us-central1)] Successful create operation.` and the
 curl -s https://us-central1-genesis-builder-7f3a.cloudfunctions.net/api/v1/health
 curl -N https://us-central1-genesis-builder-7f3a.cloudfunctions.net/generate/v1/health/stream
 ```
+
 Expected: ticks arrive **one per second** (not all at once after 5 s). If they arrive together, stop and investigate before building generation (check for compression or a proxy in between).
 
 - [ ] **Step 5: Turn the smoke route off** — set `SSE_SMOKE_ENABLED=false` in `functions/.env.genesis-builder-7f3a` (redeploy happens with the next phase).

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { SendIcon } from '@lucide/vue';
+import { SendIcon, SquareIcon } from '@lucide/vue';
 import { useTextareaAutosize } from '@vueuse/core';
 import { computed, ref } from 'vue';
 import { Button } from '@/components/ui/button';
@@ -8,13 +8,17 @@ import { LIMITS } from '@/contracts/limits';
 import { cn } from '@/lib/utils';
 
 const props = defineProps<{
-  /** A generation is running (Send disabled). */
+  /** A generation is running (Send is replaced by Stop). */
   busy: boolean;
+  /** Stop was clicked and the server has not finished yet. */
+  cancelling?: boolean;
+  /** Stop is shown while busy, and clickable once the stream has started. */
+  canCancel?: boolean;
   /** Why sending is blocked right now (offline, unsaved edits…), or null. */
   blockedReason: string | null;
   hlConnected: boolean;
 }>();
-const emit = defineEmits<{ submit: [prompt: string] }>();
+const emit = defineEmits<{ submit: [prompt: string]; cancel: [] }>();
 const text = defineModel<string>({ default: '' });
 
 const box = ref<HTMLElement | null>(null);
@@ -81,7 +85,17 @@ function onKeydown(event: KeyboardEvent): void {
         <span v-else class="hidden text-xs text-muted-foreground sm:inline">
           {{ isMac ? '⌘' : 'Ctrl' }}+Enter to send
         </span>
-        <Button class="ml-auto" size="sm" :disabled="!canSend || props.busy" @click="send">
+        <Button
+          v-if="props.busy"
+          class="ml-auto"
+          size="sm"
+          variant="outline"
+          :disabled="props.cancelling || !props.canCancel"
+          @click="emit('cancel')"
+        >
+          <SquareIcon />{{ props.cancelling ? 'Stopping…' : 'Stop' }}
+        </Button>
+        <Button v-else class="ml-auto" size="sm" :disabled="!canSend" @click="send">
           <SendIcon />Send
         </Button>
       </div>

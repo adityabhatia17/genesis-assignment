@@ -26,111 +26,111 @@ Values are the export's own tokens (`oklch()` where the design specified percept
 
 ### 2.1 Light
 
-| Token | Value | Hex | Role |
-|---|---|---|---|
-| `bg` | `#f7f7f6` | `#f7f7f6` | App background |
-| `panel` | `#ffffff` | `#ffffff` | Header, cards, dialogs, menus, editor chrome |
-| `sub` | `#f2f2f0` | `#f2f2f0` | Skeleton fill, muted rows, drawer background |
-| `hover` | `#ececea` | `#ececea` | Row/menu-item hover |
-| `line` | `#e6e5e2` | `#e6e5e2` | Default border/divider |
-| `line2` | `#d6d5d1` | `#d6d5d1` | Stronger border (inputs, secondary buttons) |
-| `fg` | `#1a1a19` | `#1a1a19` | Primary text |
-| `fg2` | `#57564f` | `#57564f` | Secondary text |
-| `fg3` | `#6f6e68` | `#6f6e68` | Faint text, placeholders, metadata |
-| `acc` | `oklch(0.5 0.12 255)` | `#2e64a6` | Accent — primary actions, links, active state |
-| `acc-h` | `oklch(0.45 0.12 255)` | `#1f5596` | Accent hover |
-| `acc-fg` | `#ffffff` | `#ffffff` | Text/icon on accent fill |
-| `acc-soft` | `oklch(0.95 0.025 255)` | `#e4f0ff` | Accent tint (badges, selected tab) |
-| `ring` | `oklch(0.62 0.13 255)` | `#4c88d3` | Focus ring — **store opaque**, see §8 finding 2 |
-| `ok` | `oklch(0.5 0.09 150)` | `#397247` | Success |
-| `ok-soft` | `oklch(0.95 0.03 150)` | `#e1f5e4` | Success tint |
-| `warn` | `oklch(0.52 0.1 70)` | `#8d5d1c` | Warning |
-| `warn-soft` | `oklch(0.96 0.035 85)` | `#fdf1d8` | Warning tint |
-| `err` | `oklch(0.52 0.14 27)` | `#ab413a` | Error/destructive |
-| `err-soft` | `oklch(0.96 0.02 27)` | `#ffedeb` | Error tint |
-| `code` | `#fcfcfb` | `#fcfcfb` | Editor/code-block background |
-| `syn-kw` | `oklch(0.48 0.13 255)` | `#215da5` | Syntax: keyword |
-| `syn-str` | `oklch(0.48 0.09 150)` | `#346c42` | Syntax: string |
-| `syn-num` | `oklch(0.52 0.1 55)` | `#94582a` | Syntax: number |
-| `syn-com` | `#8a8983` | `#8a8983` | Syntax: comment — **use `fg3` instead**, see §8 finding 3 |
-| `syn-prop` | `oklch(0.47 0.08 200)` | `#00686c` | Syntax: property/CSS key |
-| `scrim` | `rgba(20,20,18,.28)` | — | Dialog/sheet backdrop |
-| `shadow` | `0 1px 2px rgba(0,0,0,.04), 0 8px 24px rgba(0,0,0,.08)` | — | Popover/dialog/toast elevation |
+| Token       | Value                                                   | Hex       | Role                                                      |
+| ----------- | ------------------------------------------------------- | --------- | --------------------------------------------------------- |
+| `bg`        | `#f7f7f6`                                               | `#f7f7f6` | App background                                            |
+| `panel`     | `#ffffff`                                               | `#ffffff` | Header, cards, dialogs, menus, editor chrome              |
+| `sub`       | `#f2f2f0`                                               | `#f2f2f0` | Skeleton fill, muted rows, drawer background              |
+| `hover`     | `#ececea`                                               | `#ececea` | Row/menu-item hover                                       |
+| `line`      | `#e6e5e2`                                               | `#e6e5e2` | Default border/divider                                    |
+| `line2`     | `#d6d5d1`                                               | `#d6d5d1` | Stronger border (inputs, secondary buttons)               |
+| `fg`        | `#1a1a19`                                               | `#1a1a19` | Primary text                                              |
+| `fg2`       | `#57564f`                                               | `#57564f` | Secondary text                                            |
+| `fg3`       | `#6f6e68`                                               | `#6f6e68` | Faint text, placeholders, metadata                        |
+| `acc`       | `oklch(0.5 0.12 255)`                                   | `#2e64a6` | Accent — primary actions, links, active state             |
+| `acc-h`     | `oklch(0.45 0.12 255)`                                  | `#1f5596` | Accent hover                                              |
+| `acc-fg`    | `#ffffff`                                               | `#ffffff` | Text/icon on accent fill                                  |
+| `acc-soft`  | `oklch(0.95 0.025 255)`                                 | `#e4f0ff` | Accent tint (badges, selected tab)                        |
+| `ring`      | `oklch(0.62 0.13 255)`                                  | `#4c88d3` | Focus ring — **store opaque**, see §8 finding 2           |
+| `ok`        | `oklch(0.5 0.09 150)`                                   | `#397247` | Success                                                   |
+| `ok-soft`   | `oklch(0.95 0.03 150)`                                  | `#e1f5e4` | Success tint                                              |
+| `warn`      | `oklch(0.52 0.1 70)`                                    | `#8d5d1c` | Warning                                                   |
+| `warn-soft` | `oklch(0.96 0.035 85)`                                  | `#fdf1d8` | Warning tint                                              |
+| `err`       | `oklch(0.52 0.14 27)`                                   | `#ab413a` | Error/destructive                                         |
+| `err-soft`  | `oklch(0.96 0.02 27)`                                   | `#ffedeb` | Error tint                                                |
+| `code`      | `#fcfcfb`                                               | `#fcfcfb` | Editor/code-block background                              |
+| `syn-kw`    | `oklch(0.48 0.13 255)`                                  | `#215da5` | Syntax: keyword                                           |
+| `syn-str`   | `oklch(0.48 0.09 150)`                                  | `#346c42` | Syntax: string                                            |
+| `syn-num`   | `oklch(0.52 0.1 55)`                                    | `#94582a` | Syntax: number                                            |
+| `syn-com`   | `#8a8983`                                               | `#8a8983` | Syntax: comment — **use `fg3` instead**, see §8 finding 3 |
+| `syn-prop`  | `oklch(0.47 0.08 200)`                                  | `#00686c` | Syntax: property/CSS key                                  |
+| `scrim`     | `rgba(20,20,18,.28)`                                    | —         | Dialog/sheet backdrop                                     |
+| `shadow`    | `0 1px 2px rgba(0,0,0,.04), 0 8px 24px rgba(0,0,0,.08)` | —         | Popover/dialog/toast elevation                            |
 
 ### 2.2 Dark
 
-| Token | Value | Hex | Role |
-|---|---|---|---|
-| `bg` | `#0f0f0e` | `#0f0f0e` | App background |
-| `panel` | `#151514` | `#151514` | Header, cards, dialogs, menus |
-| `sub` | `#1b1b1a` | `#1b1b1a` | Skeleton fill, muted rows |
-| `hover` | `#222220` | `#222220` | Row/menu-item hover |
-| `line` | `#262624` | `#262624` | Default border/divider |
-| `line2` | `#34332f` | `#34332f` | Stronger border |
-| `fg` | `#ececea` | `#ececea` | Primary text |
-| `fg2` | `#a6a59f` | `#a6a59f` | Secondary text |
-| `fg3` | `#85847d` | `#85847d` | Faint text, placeholders |
-| `acc` | `oklch(0.72 0.1 255)` | `#79a7e2` | Accent |
-| `acc-h` | `oklch(0.78 0.09 255)` | `#90baf1` | Accent hover |
-| `acc-fg` | `#0e1014` | `#0e1014` | Text/icon on accent fill (dark text on light accent) |
-| `acc-soft` | `oklch(0.3 0.04 255)` | `#202f42` | Accent tint |
-| `ring` | `oklch(0.72 0.1 255)` | `#79a7e2` | Focus ring — opaque |
-| `ok` | `oklch(0.74 0.09 150)` | `#81bb8d` | Success |
-| `ok-soft` | `oklch(0.28 0.035 150)` | `#1c2e20` | Success tint |
-| `warn` | `oklch(0.78 0.1 80)` | `#d9b06b` | Warning |
-| `warn-soft` | `oklch(0.29 0.04 80)` | `#362913` | Warning tint |
-| `err` | `oklch(0.72 0.12 27)` | `#e6867b` | Error/destructive |
-| `err-soft` | `oklch(0.29 0.05 27)` | `#41211e` | Error tint |
-| `code` | `#121211` | `#121211` | Editor/code-block background |
-| `syn-kw` | `oklch(0.76 0.1 255)` | `#85b4f0` | Syntax: keyword |
-| `syn-str` | `oklch(0.76 0.09 150)` | `#87c293` | Syntax: string |
-| `syn-num` | `oklch(0.8 0.09 70)` | `#e3b47d` | Syntax: number |
-| `syn-com` | `#6f6e68` | `#6f6e68` | Syntax: comment — use `fg3` instead |
-| `syn-prop` | `oklch(0.78 0.08 200)` | `#76c7cc` | Syntax: property/CSS key |
-| `scrim` | `rgba(0,0,0,.55)` | — | Dialog/sheet backdrop |
-| `shadow` | `0 1px 2px rgba(0,0,0,.4), 0 12px 32px rgba(0,0,0,.5)` | — | Elevation |
+| Token       | Value                                                  | Hex       | Role                                                 |
+| ----------- | ------------------------------------------------------ | --------- | ---------------------------------------------------- |
+| `bg`        | `#0f0f0e`                                              | `#0f0f0e` | App background                                       |
+| `panel`     | `#151514`                                              | `#151514` | Header, cards, dialogs, menus                        |
+| `sub`       | `#1b1b1a`                                              | `#1b1b1a` | Skeleton fill, muted rows                            |
+| `hover`     | `#222220`                                              | `#222220` | Row/menu-item hover                                  |
+| `line`      | `#262624`                                              | `#262624` | Default border/divider                               |
+| `line2`     | `#34332f`                                              | `#34332f` | Stronger border                                      |
+| `fg`        | `#ececea`                                              | `#ececea` | Primary text                                         |
+| `fg2`       | `#a6a59f`                                              | `#a6a59f` | Secondary text                                       |
+| `fg3`       | `#85847d`                                              | `#85847d` | Faint text, placeholders                             |
+| `acc`       | `oklch(0.72 0.1 255)`                                  | `#79a7e2` | Accent                                               |
+| `acc-h`     | `oklch(0.78 0.09 255)`                                 | `#90baf1` | Accent hover                                         |
+| `acc-fg`    | `#0e1014`                                              | `#0e1014` | Text/icon on accent fill (dark text on light accent) |
+| `acc-soft`  | `oklch(0.3 0.04 255)`                                  | `#202f42` | Accent tint                                          |
+| `ring`      | `oklch(0.72 0.1 255)`                                  | `#79a7e2` | Focus ring — opaque                                  |
+| `ok`        | `oklch(0.74 0.09 150)`                                 | `#81bb8d` | Success                                              |
+| `ok-soft`   | `oklch(0.28 0.035 150)`                                | `#1c2e20` | Success tint                                         |
+| `warn`      | `oklch(0.78 0.1 80)`                                   | `#d9b06b` | Warning                                              |
+| `warn-soft` | `oklch(0.29 0.04 80)`                                  | `#362913` | Warning tint                                         |
+| `err`       | `oklch(0.72 0.12 27)`                                  | `#e6867b` | Error/destructive                                    |
+| `err-soft`  | `oklch(0.29 0.05 27)`                                  | `#41211e` | Error tint                                           |
+| `code`      | `#121211`                                              | `#121211` | Editor/code-block background                         |
+| `syn-kw`    | `oklch(0.76 0.1 255)`                                  | `#85b4f0` | Syntax: keyword                                      |
+| `syn-str`   | `oklch(0.76 0.09 150)`                                 | `#87c293` | Syntax: string                                       |
+| `syn-num`   | `oklch(0.8 0.09 70)`                                   | `#e3b47d` | Syntax: number                                       |
+| `syn-com`   | `#6f6e68`                                              | `#6f6e68` | Syntax: comment — use `fg3` instead                  |
+| `syn-prop`  | `oklch(0.78 0.08 200)`                                 | `#76c7cc` | Syntax: property/CSS key                             |
+| `scrim`     | `rgba(0,0,0,.55)`                                      | —         | Dialog/sheet backdrop                                |
+| `shadow`    | `0 1px 2px rgba(0,0,0,.4), 0 12px 32px rgba(0,0,0,.5)` | —         | Elevation                                            |
 
 ### 2.3 shadcn variable mapping
 
-The design's tokens are the *values*; shadcn-vue's `components.json` (`baseColor: neutral`, style `reka-nova`) defines the *variable names* every generated component already reads. Map one to the other — don't rename shadcn's variables, don't add new colors inside `.vue` files:
+The design's tokens are the _values_; shadcn-vue's `components.json` (`baseColor: neutral`, style `reka-nova`) defines the _variable names_ every generated component already reads. Map one to the other — don't rename shadcn's variables, don't add new colors inside `.vue` files:
 
-| shadcn variable | Design token | Note |
-|---|---|---|
-| `--background` | `bg` | |
-| `--foreground` | `fg` | |
-| `--card`, `--popover` | `panel` | |
-| `--card-foreground`, `--popover-foreground` | `fg` | |
-| `--primary` | `acc` | **shadcn's "primary" is the design's "accent."** |
-| `--primary-foreground` | `acc-fg` | |
-| `--muted` | `sub` | |
-| `--muted-foreground` | `fg2` | design has two muted levels (`fg2`, `fg3`); shadcn has one — add `--faint-foreground: fg3` (custom token, §3 of the implementation doc) |
-| `--accent` | `hover` | **shadcn's "accent" is a hover surface, not the brand color** — do not confuse with `--primary` |
-| `--accent-foreground` | `fg` | |
-| `--border` | `line` | |
-| `--input` | `line2` | |
-| `--ring` | `ring` (opaque form) | see §8 finding 2 |
-| `--destructive` | `err` | |
-| `--success` (custom, already in FE-0.2) | `ok` | |
-| `--warning` (custom, already in FE-0.2) | `warn` | |
-| new: `--code` | `code` | editor/code-block background |
-| new: `--syntax-keyword/-string/-number/-comment/-property` | `syn-*` | Monaco theme + any inline code samples |
-| new: `--scrim` | `scrim` | dialog/sheet backdrop |
+| shadcn variable                                            | Design token         | Note                                                                                                                                    |
+| ---------------------------------------------------------- | -------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| `--background`                                             | `bg`                 |                                                                                                                                         |
+| `--foreground`                                             | `fg`                 |                                                                                                                                         |
+| `--card`, `--popover`                                      | `panel`              |                                                                                                                                         |
+| `--card-foreground`, `--popover-foreground`                | `fg`                 |                                                                                                                                         |
+| `--primary`                                                | `acc`                | **shadcn's "primary" is the design's "accent."**                                                                                        |
+| `--primary-foreground`                                     | `acc-fg`             |                                                                                                                                         |
+| `--muted`                                                  | `sub`                |                                                                                                                                         |
+| `--muted-foreground`                                       | `fg2`                | design has two muted levels (`fg2`, `fg3`); shadcn has one — add `--faint-foreground: fg3` (custom token, §3 of the implementation doc) |
+| `--accent`                                                 | `hover`              | **shadcn's "accent" is a hover surface, not the brand color** — do not confuse with `--primary`                                         |
+| `--accent-foreground`                                      | `fg`                 |                                                                                                                                         |
+| `--border`                                                 | `line`               |                                                                                                                                         |
+| `--input`                                                  | `line2`              |                                                                                                                                         |
+| `--ring`                                                   | `ring` (opaque form) | see §8 finding 2                                                                                                                        |
+| `--destructive`                                            | `err`                |                                                                                                                                         |
+| `--success` (custom, already in FE-0.2)                    | `ok`                 |                                                                                                                                         |
+| `--warning` (custom, already in FE-0.2)                    | `warn`               |                                                                                                                                         |
+| new: `--code`                                              | `code`               | editor/code-block background                                                                                                            |
+| new: `--syntax-keyword/-string/-number/-comment/-property` | `syn-*`              | Monaco theme + any inline code samples                                                                                                  |
+| new: `--scrim`                                             | `scrim`              | dialog/sheet backdrop                                                                                                                   |
 
 ## 3. Typography
 
 **Fonts:** Geist (UI) and Geist Mono (code, file paths, IDs, version numbers, keyboard shortcuts). Weights used: 400, 500, 600 only — never 700+.
 
-| Role | Size / weight / spacing | Sample | Tailwind scale name |
-|---|---|---|---|
-| Page title (Dashboard "Projects") | 22px / 600 / −1.5% | "Projects" | `text-2xl` |
-| Auth title | 20px / 600 | "Sign in to Genesis" | `text-xl` |
-| Page-state title (404, error pages) | 18px / 600 | "Project not found" | `text-lg` |
-| Dialog / sheet title | 15px / 600 | "Version history" | `text-md` *(new step, see §12 impl doc)* |
-| Body — auth & dashboard | 14px / 400 | "Connect a location so your apps can read its data." | `text-base` |
-| Body — workspace (default UI size) | 13px / 400–500 | "Restored version 2 as version 4" | `text-sm` |
-| Caption / metadata | 12px / 400 | "12 min ago · 4 files changed" | `text-xs` |
-| Mono — code line, file path | 12px / 400 | `js/appointments.js` | `font-mono text-xs` |
-| Mono — version tag, shortcut key | 11px / 500 | `v6` `⌘S` `429` `184 ms` | `font-mono text-2xs` *(new step)* |
+| Role                                | Size / weight / spacing | Sample                                               | Tailwind scale name                      |
+| ----------------------------------- | ----------------------- | ---------------------------------------------------- | ---------------------------------------- |
+| Page title (Dashboard "Projects")   | 22px / 600 / −1.5%      | "Projects"                                           | `text-2xl`                               |
+| Auth title                          | 20px / 600              | "Sign in to Genesis"                                 | `text-xl`                                |
+| Page-state title (404, error pages) | 18px / 600              | "Project not found"                                  | `text-lg`                                |
+| Dialog / sheet title                | 15px / 600              | "Version history"                                    | `text-md` _(new step, see §12 impl doc)_ |
+| Body — auth & dashboard             | 14px / 400              | "Connect a location so your apps can read its data." | `text-base`                              |
+| Body — workspace (default UI size)  | 13px / 400–500          | "Restored version 2 as version 4"                    | `text-sm`                                |
+| Caption / metadata                  | 12px / 400              | "12 min ago · 4 files changed"                       | `text-xs`                                |
+| Mono — code line, file path         | 12px / 400              | `js/appointments.js`                                 | `font-mono text-xs`                      |
+| Mono — version tag, shortcut key    | 11px / 500              | `v6` `⌘S` `429` `184 ms`                             | `font-mono text-2xs` _(new step)_        |
 
 Values between these (11.5, 12.5, 13.5, 14.5) in the export are rounding artifacts of the design tool — they collapse onto the scale above; do not add extra steps for them.
 
@@ -141,32 +141,32 @@ Line height 1.45 throughout (matches Tailwind's default body leading — no over
 - **Spacing:** 4px base unit — `4·8·12·16·20·24·32·48`. This is Tailwind's default `--spacing` scale; no change needed.
 - **Radius:**
 
-  | Radius | Used for |
-  |---|---|
-  | 4px | Badges |
-  | 5px | Menu items, select triggers |
-  | 6px | Buttons, inputs, small cards, chat bubbles |
-  | 8px | Cards, dropdown/context menus, toasts, code blocks |
-  | 10px | Dialogs, side sheets |
-  | full | Avatars, switch, status dots |
+  | Radius | Used for                                           |
+  | ------ | -------------------------------------------------- |
+  | 4px    | Badges                                             |
+  | 5px    | Menu items, select triggers                        |
+  | 6px    | Buttons, inputs, small cards, chat bubbles         |
+  | 8px    | Cards, dropdown/context menus, toasts, code blocks |
+  | 10px   | Dialogs, side sheets                               |
+  | full   | Avatars, switch, status dots                       |
 
 - **Shadow:** exactly one elevation value per theme (§2.1/§2.2 `shadow` token), used for popovers, dialogs, dropdowns and toasts. Nothing else gets a shadow — cards, rows and panels are separated by `border` only.
 - **Backdrop:** `scrim` token behind dialogs/sheets — flat semi-transparent color, **no blur** (no glassmorphism, principle §1.1).
 
 ## 5. Layout
 
-| Surface | Dimension |
-|---|---|
-| Dashboard/auth header height | 52px (dashboard) / 64px (auth) |
-| Workspace header height | 48px |
-| Workspace panels at ≥1024px | Chat `0 0 344px` · Code `1 1 0` (flexible) · Preview `0 0 520px`, each resizable with a draggable 1px divider |
+| Surface                                                 | Dimension                                                                                                                                                                   |
+| ------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Dashboard/auth header height                            | 52px (dashboard) / 64px (auth)                                                                                                                                              |
+| Workspace header height                                 | 48px                                                                                                                                                                        |
+| Workspace panels at ≥1024px                             | Chat `0 0 344px` · Code `1 1 0` (flexible) · Preview `0 0 520px`, each resizable with a draggable 1px divider                                                               |
 | Workspace panels at <1024px ("narrow", tested at 390px) | Collapse to a 3-way segmented control (Chat / Code / Preview); **all three stay mounted** so a running stream, Monaco's model and the preview iframe survive the tab switch |
-| Preview console/calls drawer | 236px fixed height, bottom-docked, 2 tabs |
-| Code panel file tree | 196px fixed width (wide only; hidden when narrow) |
-| Version history sheet | 440px wide, right-docked |
-| Diff dialog | 1160×720px, centered — **not built in v1**, see §7 of the implementation doc |
-| Content max-width (auth) | 340px |
-| Content max-width (dashboard) | 1040px |
+| Preview console/calls drawer                            | 236px fixed height, bottom-docked, 2 tabs                                                                                                                                   |
+| Code panel file tree                                    | 196px fixed width (wide only; hidden when narrow)                                                                                                                           |
+| Version history sheet                                   | 440px wide, right-docked                                                                                                                                                    |
+| Diff dialog                                             | 1160×720px, centered — built (R-B3, View changes)                                                                                                                           |
+| Content max-width (auth)                                | 340px                                                                                                                                                                       |
+| Content max-width (dashboard)                           | 1040px                                                                                                                                                                      |
 
 ## 6. Iconography and motion
 
@@ -178,15 +178,16 @@ Line height 1.45 throughout (matches Tailwind's default body leading — no over
 
 Every interactive component needs Default / Hover / Focus / Disabled states; primary actions also need Loading.
 
-| Component | Default | Hover | Focus | Disabled | Loading |
-|---|---|---|---|---|---|
-| Primary button | `acc` fill, `acc-fg` text | `acc-h` fill | + double ring: `0 0 0 2px panel, 0 0 0 4px ring` | 45% opacity | 70% opacity + spinning ring + label change ("Saving") |
-| Secondary button | `panel` fill, `line2` border | `hover` fill | `acc` border + `0 0 0 3px ring` | `fg3` text, `line` border | spinner + label change ("Retrying") |
-| Destructive button | `err` fill, white text (dark theme: use `bg`-colored text, see §8 finding 1) | `filter: brightness(.92)` | double ring in `err-soft` | 45% opacity | spinner + label change ("Deleting") |
-| Input | `line2` border | — | `acc` border + `0 0 0 3px ring` | `sub` fill, `fg3` text | — |
-| Input (error) | `err` border, error text below in `err` | — | — | — | — |
+| Component          | Default                                                                      | Hover                     | Focus                                            | Disabled                  | Loading                                               |
+| ------------------ | ---------------------------------------------------------------------------- | ------------------------- | ------------------------------------------------ | ------------------------- | ----------------------------------------------------- |
+| Primary button     | `acc` fill, `acc-fg` text                                                    | `acc-h` fill              | + double ring: `0 0 0 2px panel, 0 0 0 4px ring` | 45% opacity               | 70% opacity + spinning ring + label change ("Saving") |
+| Secondary button   | `panel` fill, `line2` border                                                 | `hover` fill              | `acc` border + `0 0 0 3px ring`                  | `fg3` text, `line` border | spinner + label change ("Retrying")                   |
+| Destructive button | `err` fill, white text (dark theme: use `bg`-colored text, see §8 finding 1) | `filter: brightness(.92)` | double ring in `err-soft`                        | 45% opacity               | spinner + label change ("Deleting")                   |
+| Input              | `line2` border                                                               | —                         | `acc` border + `0 0 0 3px ring`                  | `sub` fill, `fg3` text    | —                                                     |
+| Input (error)      | `err` border, error text below in `err`                                      | —                         | —                                                | —                         | —                                                     |
 
 Badge/status vocabulary (icon shape + word, never color alone):
+
 - `v6` — monospace version chip, `line2` border, no fill.
 - **Current** — `acc-soft` fill, `acc` text.
 - **Connected** — filled dot (`ok`) + word.
@@ -214,9 +215,9 @@ No other pair needs a change — the lowest surviving ratio is 4.56:1 (`fg3` on 
 
 ## 10. What this design system does not cover
 
-Two things appear in the export that are explicitly **out of v1** per [`08-backend-implementation-plan/09-hardening-bonuses-and-deploy.md`](08-backend-implementation-plan/09-hardening-bonuses-and-deploy.md) and [`09-frontend-implementation-plan/08-snapshots-and-diff.md`](09-frontend-implementation-plan/08-snapshots-and-diff.md) FE-7.3 — their visual spec is kept here for the record but there is no task building them:
+The export's visual spec matches the built UI, including the diff dialog (R-B3, FE-7.3).
 
-- The **diff dialog** ("View changes", side-by-side file diff) — bonus R-B3, not built.
+- The **diff dialog** ("View changes", side-by-side file diff) is built.
 - The **HighLevel calls drawer tab** content is fine (it reflects real `runtime.service` calls, FE-6/FE-7), but its sample numbers (`184 ms`, `429 Rate limited`) are illustrative only, not literal fixtures.
 
 Sample code shown inside the design mockups (`hl.request('contacts.search', …)`, a free-slots example) uses a different runtime-call shape than our actual `window.genesis.highlevel.<method>` SDK (contracts in [`07-end-to-end-system-design.md`](07-end-to-end-system-design.md) §3) — treat it as illustrative chat/editor content, not an API to implement. The third example prompt in the design ("Find open slots on a calendar for the next 7 days") uses `calendars.freeSlots`, an **extension** method disabled by default (see [`08-backend-implementation-plan/01-foundation.md`](08-backend-implementation-plan/01-foundation.md) `HL_EXTENDED_METHODS`); the implementation doc swaps it for a core-method example.

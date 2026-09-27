@@ -19,21 +19,14 @@ UI copy uses "snapshot" — the assignment's word — everywhere.
 `frontend/src/services/firestore/snapshots.repo.ts`:
 
 ```ts
-import { getDoc, limit, orderBy, query, type Query } from "firebase/firestore";
-import { refs } from "./paths";
-import type { Snapshot } from "./types";
+import { getDoc, limit, orderBy, query, type Query } from 'firebase/firestore';
+import { refs } from './paths';
+import type { Snapshot } from './types';
 
 export const SNAPSHOT_WINDOW = 50;
 
-export const snapshotsQuery = (
-  uid: string,
-  projectId: string,
-): Query<Snapshot> =>
-  query(
-    refs.snapshots(uid, projectId),
-    orderBy("seq", "desc"),
-    limit(SNAPSHOT_WINDOW),
-  );
+export const snapshotsQuery = (uid: string, projectId: string): Query<Snapshot> =>
+  query(refs.snapshots(uid, projectId), orderBy('seq', 'desc'), limit(SNAPSHOT_WINDOW));
 
 export async function fetchSnapshot(
   uid: string,
@@ -58,13 +51,10 @@ export async function fetchBlobContent(
 `frontend/src/features/snapshots/useSnapshots.ts`:
 
 ```ts
-import type { Ref } from "vue";
-import {
-  useFirestoreQuery,
-  type FirestoreQueryState,
-} from "@/composables/useFirestoreQuery";
-import { snapshotsQuery } from "@/services/firestore/snapshots.repo";
-import type { Snapshot } from "@/services/firestore/types";
+import type { Ref } from 'vue';
+import { useFirestoreQuery, type FirestoreQueryState } from '@/composables/useFirestoreQuery';
+import { snapshotsQuery } from '@/services/firestore/snapshots.repo';
+import type { Snapshot } from '@/services/firestore/types';
 
 /** Listens only while `enabled` (the sheet is open) to keep reads low. */
 export function useSnapshots(
@@ -72,9 +62,7 @@ export function useSnapshots(
   projectId: string,
   enabled: Ref<boolean>,
 ): FirestoreQueryState<Snapshot> {
-  return useFirestoreQuery(() =>
-    enabled.value ? snapshotsQuery(uid, projectId) : null,
-  );
+  return useFirestoreQuery(() => (enabled.value ? snapshotsQuery(uid, projectId) : null));
 }
 ```
 
@@ -82,13 +70,13 @@ export function useSnapshots(
 
 ```vue
 <script setup lang="ts">
-import { RotateCcwIcon } from "@lucide/vue";
-import { computed } from "vue";
-import RelativeTime from "@/components/common/RelativeTime.vue";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { toMillis } from "@/lib/time";
-import type { Snapshot } from "@/services/firestore/types";
+import { RotateCcwIcon } from '@lucide/vue';
+import { computed } from 'vue';
+import RelativeTime from '@/components/common/RelativeTime.vue';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { toMillis } from '@/lib/time';
+import type { Snapshot } from '@/services/firestore/types';
 
 const props = defineProps<{
   snapshot: Snapshot;
@@ -99,9 +87,9 @@ const props = defineProps<{
 const emit = defineEmits<{ restore: [] }>();
 
 const KIND_LABEL = {
-  generation: "AI",
-  checkpoint: "Checkpoint",
-  restore: "Restore",
+  generation: 'AI',
+  checkpoint: 'Checkpoint',
+  restore: 'Restore',
 } as const;
 const changed = computed(
   () => props.snapshot.changedPaths.length + props.snapshot.deletedPaths.length,
@@ -109,27 +97,18 @@ const changed = computed(
 </script>
 
 <template>
-  <li
-    class="flex flex-col gap-1.5 border-b px-4 py-3"
-    data-testid="snapshot-item"
-  >
+  <li class="flex flex-col gap-1.5 border-b px-4 py-3" data-testid="snapshot-item">
     <div class="flex items-center gap-2">
-      <span class="font-mono text-sm font-medium"
-        >#{{ props.snapshot.seq }}</span
-      >
-      <Badge variant="outline" class="text-[10px]">{{
-        KIND_LABEL[props.snapshot.kind]
-      }}</Badge>
-      <Badge v-if="props.current" variant="secondary" class="text-[10px]"
-        >Current</Badge
-      >
+      <span class="font-mono text-sm font-medium">#{{ props.snapshot.seq }}</span>
+      <Badge variant="outline" class="text-[10px]">{{ KIND_LABEL[props.snapshot.kind] }}</Badge>
+      <Badge v-if="props.current" variant="secondary" class="text-[10px]">Current</Badge>
       <span class="ml-auto text-xs text-muted-foreground"
         ><RelativeTime :ms="toMillis(props.snapshot.createdAt)"
       /></span>
     </div>
     <p class="line-clamp-2 text-sm">{{ props.snapshot.label }}</p>
     <p class="text-xs text-muted-foreground">
-      {{ changed }} {{ changed === 1 ? "file" : "files" }} changed ·
+      {{ changed }} {{ changed === 1 ? 'file' : 'files' }} changed ·
       {{ props.snapshot.fileCount }} total
       <template v-if="props.current && props.dirtySinceCurrent">
         · unsaved edits since this snapshot</template
@@ -153,37 +132,32 @@ const changed = computed(
 
 ```vue
 <script setup lang="ts">
-import { storeToRefs } from "pinia";
-import { computed, ref } from "vue";
-import PageState from "@/components/common/PageState.vue";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { storeToRefs } from 'pinia';
+import { computed, ref } from 'vue';
+import PageState from '@/components/common/PageState.vue';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import {
   Sheet,
   SheetContent,
   SheetDescription,
   SheetHeader,
   SheetTitle,
-} from "@/components/ui/sheet";
-import { Skeleton } from "@/components/ui/skeleton";
-import { isActive } from "@/features/workspace/stores/generation.reducer";
-import { useGenerationStore } from "@/features/workspace/stores/generation.store";
-import { useWorkspaceStore } from "@/features/workspace/stores/workspace.store";
-import { useWorkspace } from "@/features/workspace/workspace-context";
-import { toUserMessage } from "@/lib/errors";
-import type { Snapshot } from "@/services/firestore/types";
-import RestoreSnapshotDialog from "./RestoreSnapshotDialog.vue";
-import SnapshotItem from "./SnapshotItem.vue";
-import { useSnapshots } from "./useSnapshots";
+} from '@/components/ui/sheet';
+import { Skeleton } from '@/components/ui/skeleton';
+import { isActive } from '@/features/workspace/stores/generation.reducer';
+import { useGenerationStore } from '@/features/workspace/stores/generation.store';
+import { useWorkspaceStore } from '@/features/workspace/stores/workspace.store';
+import { useWorkspace } from '@/features/workspace/workspace-context';
+import { toUserMessage } from '@/lib/errors';
+import type { Snapshot } from '@/services/firestore/types';
+import RestoreSnapshotDialog from './RestoreSnapshotDialog.vue';
+import SnapshotItem from './SnapshotItem.vue';
+import { useSnapshots } from './useSnapshots';
 
 const ws = useWorkspace();
 const { historyOpen } = storeToRefs(useWorkspaceStore());
 const { state } = storeToRefs(useGenerationStore());
-const {
-  data: snapshots,
-  loading,
-  error,
-  retry,
-} = useSnapshots(ws.uid, ws.projectId, historyOpen);
+const { data: snapshots, loading, error, retry } = useSnapshots(ws.uid, ws.projectId, historyOpen);
 
 const generating = computed(() => isActive(state.value.status));
 const currentId = computed(() => ws.project.value?.latestSnapshotId ?? null);
@@ -200,10 +174,7 @@ function askRestore(snapshot: Snapshot): void {
 
 <template>
   <Sheet v-model:open="historyOpen">
-    <SheetContent
-      side="right"
-      class="flex w-full flex-col gap-0 p-0 sm:max-w-md"
-    >
+    <SheetContent side="right" class="flex w-full flex-col gap-0 p-0 sm:max-w-md">
       <SheetHeader class="border-b">
         <SheetTitle>Snapshots</SheetTitle>
         <SheetDescription
@@ -236,9 +207,7 @@ function askRestore(snapshot: Snapshot): void {
             :snapshot="snapshot"
             :current="snapshot.id === currentId"
             :dirty-since-current="dirty"
-            :restore-disabled="
-              generating || (snapshot.id === currentId && !dirty)
-            "
+            :restore-disabled="generating || (snapshot.id === currentId && !dirty)"
             @restore="askRestore(snapshot)"
           />
         </ul>
@@ -271,17 +240,14 @@ function askRestore(snapshot: Snapshot): void {
 `frontend/src/services/api/snapshots.api.ts`:
 
 ```ts
-import type { RestoreResult } from "@/contracts/api";
-import { apiFetch } from "@/lib/http";
+import type { RestoreResult } from '@/contracts/api';
+import { apiFetch } from '@/lib/http';
 
-export function restoreSnapshot(
-  projectId: string,
-  snapshotId: string,
-): Promise<RestoreResult> {
+export function restoreSnapshot(projectId: string, snapshotId: string): Promise<RestoreResult> {
   return apiFetch(
-    "api",
+    'api',
     `/v1/projects/${encodeURIComponent(projectId)}/snapshots/${encodeURIComponent(snapshotId)}/restore`,
-    { method: "POST", body: {} },
+    { method: 'POST', body: {} },
   );
 }
 ```
@@ -290,8 +256,8 @@ export function restoreSnapshot(
 
 ```vue
 <script setup lang="ts">
-import { ref } from "vue";
-import { toast } from "vue-sonner";
+import { ref } from 'vue';
+import { toast } from 'vue-sonner';
 import {
   AlertDialog,
   AlertDialogCancel,
@@ -300,16 +266,16 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import { Button } from "@/components/ui/button";
-import { Spinner } from "@/components/ui/spinner";
-import { toUserMessage } from "@/lib/errors";
-import { restoreSnapshot } from "@/services/api/snapshots.api";
-import type { Snapshot } from "@/services/firestore/types";
+} from '@/components/ui/alert-dialog';
+import { Button } from '@/components/ui/button';
+import { Spinner } from '@/components/ui/spinner';
+import { toUserMessage } from '@/lib/errors';
+import { restoreSnapshot } from '@/services/api/snapshots.api';
+import type { Snapshot } from '@/services/firestore/types';
 
 const props = defineProps<{ projectId: string; snapshot: Snapshot | null }>();
 const emit = defineEmits<{ restored: [] }>();
-const open = defineModel<boolean>("open", { required: true });
+const open = defineModel<boolean>('open', { required: true });
 const busy = ref(false);
 
 async function onRestore(): Promise<void> {
@@ -317,11 +283,9 @@ async function onRestore(): Promise<void> {
   busy.value = true;
   try {
     const result = await restoreSnapshot(props.projectId, props.snapshot.id);
-    toast.success(
-      `Restored #${props.snapshot.seq} (now #${result.snapshotSeq})`,
-    );
+    toast.success(`Restored #${props.snapshot.seq} (now #${result.snapshotSeq})`);
     open.value = false;
-    emit("restored");
+    emit('restored');
   } catch (error) {
     toast.error(toUserMessage(error));
   } finally {
@@ -334,20 +298,15 @@ async function onRestore(): Promise<void> {
   <AlertDialog v-model:open="open">
     <AlertDialogContent>
       <AlertDialogHeader>
-        <AlertDialogTitle
-          >Restore snapshot #{{ props.snapshot?.seq }}?</AlertDialogTitle
-        >
+        <AlertDialogTitle>Restore snapshot #{{ props.snapshot?.seq }}?</AlertDialogTitle>
         <AlertDialogDescription>
-          Your files return to this version. If you have saved edits since the
-          last snapshot, they are kept as a checkpoint first — nothing is lost,
-          and you can restore any version later.
+          Your files return to this version. If you have saved edits since the last snapshot, they
+          are kept as a checkpoint first — nothing is lost, and you can restore any version later.
         </AlertDialogDescription>
       </AlertDialogHeader>
       <AlertDialogFooter>
         <AlertDialogCancel :disabled="busy">Cancel</AlertDialogCancel>
-        <Button :disabled="busy" @click="onRestore"
-          ><Spinner v-if="busy" />Restore</Button
-        >
+        <Button :disabled="busy" @click="onRestore"><Spinner v-if="busy" />Restore</Button>
       </AlertDialogFooter>
     </AlertDialogContent>
   </AlertDialog>
@@ -360,4 +319,4 @@ async function onRestore(): Promise<void> {
 
 ### Task FE-7.3: Diff view (bonus R-B3)
 
-Assignment bonus R-B3 is **out of v1**. Do not add `snapshot-diff.ts` or `SnapshotDiffDialog.vue`. History + restore (FE-7.1 / FE-7.2) is the snapshot surface.
+Implemented (R-B3): `snapshot-diff.ts` and `SnapshotDiffDialog.vue`, opened from View changes. History + restore (FE-7.1 / FE-7.2) remain.

@@ -54,6 +54,8 @@ export interface HostBridgeDeps {
   ) => Promise<unknown>;
   onLog: (entry: BridgeLog) => void;
   onCall: (call: BridgeCall) => void;
+  /** Fires once the preview port is open, so queued webhook events can be pushed. */
+  onPort?: () => void;
   now?: () => number;
   win?: WindowLike;
   createChannel?: () => { port1: PortLike; port2: Transferable };
@@ -112,10 +114,12 @@ export class PreviewHostBridge {
     this.inFlight = 0;
   }
 
-  /** Bonus: forwards HighLevel webhook events to `genesis.on(...)` handlers. */
-  pushEvent(name: RuntimeEventName, payload: Record<string, unknown>): void {
+  /** Forwards a HighLevel webhook to `genesis.on` handlers. False when the preview is not connected. */
+  pushEvent(name: RuntimeEventName, payload: Record<string, unknown>): boolean {
+    if (!this.port) return false;
     const message: HostEventMessage = { type: 'event', name, payload };
-    this.port?.postMessage(message);
+    this.port.postMessage(message);
+    return true;
   }
 
   private onWindowMessage(event: MessageEvent): void {
@@ -136,6 +140,7 @@ export class PreviewHostBridge {
       context: this.deps.getContext(),
     };
     frame.contentWindow?.postMessage(init, '*', [channel.port2]);
+    this.deps.onPort?.();
   }
 
   private async onPortMessage(data: unknown): Promise<void> {

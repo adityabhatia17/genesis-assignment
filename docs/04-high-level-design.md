@@ -33,7 +33,7 @@ Genesis has one human actor (the builder) and three external systems. The genera
 2. Make every generation **safe** (untrusted code, zero credentials), **atomic** (never a half-applied app) and **reversible** (snapshots).
 3. Be **deployable and demoable** by one engineer in five days, and **runnable locally without paid keys**.
 
-**Non-goals (v1):** assignment bonuses (cancel, diff, in-app rate limits, Load more in generated apps, webhooks); HighLevel writes and free slots; multiple locations per user, collaboration, generated apps using frameworks/npm, publishing to the HighLevel marketplace, durable/resumable generation jobs.
+**Non-goals:** HighLevel writes and free slots; multiple locations per user, collaboration, generated apps using frameworks/npm, publishing to the HighLevel marketplace, durable/resumable generation jobs. Cancel, diff, rate limits, Load more, and webhooks are implemented (R-B1, R-B3–R-B6).
 
 **Quality attributes and measurable targets**
 
@@ -139,7 +139,7 @@ Each answer: **Decision · Why · Rejected · Trade-offs · Interview line.**
 
 ### Q7. What happens on interruption or disconnect?
 
-- **Decision:** Every validated file is **staged durably** as it completes (`generations/{id}/staged`). The working tree changes **only** in one atomic transaction at the end. If the stream fails, the model errors, the deadline hits, or the client disconnects: abort the model stream (stop spending), finalize the generation as `failed`/`interrupted` with the staged file list, and let the user **Apply N completed files**, **Discard**, or **Retry**. A lease with heartbeats marks generations from dead instances as `interrupted` after 60 s. User-initiated cancel (assignment bonus R-B1) is out of v1.
+- **Decision:** Every validated file is **staged durably** as it completes (`generations/{id}/staged`). The working tree changes **only** in one atomic transaction at the end. If the stream fails, the model errors, the deadline hits, or the client disconnects: abort the model stream (stop spending), finalize the generation as `failed`/`interrupted` with the staged file list, and let the user **Apply N completed files**, **Discard**, or **Retry**. A lease with heartbeats marks generations from dead instances as `interrupted` after 60 s. User-initiated cancel (R-B1) aborts with `cancelled` when `cancelRequestedAt` is set.
 - **Why:** Satisfies "partial results preserved" and "never break the last working app" at the same time (the draft could only do one). Cloud Run does not reliably keep working after the client leaves, so we don't pretend to.
 - **Rejected:** Writing files into the project mid-stream (broken apps); discarding partial output; continuing after disconnect (throttled CPU); durable job queue (five-day scope); a Stop-generation control (bonus).
 - **Trade-offs:** A dropped connection loses the in-flight file (never the completed ones). Resumable generations are improvement #2.
@@ -195,9 +195,9 @@ Each answer: **Decision · Why · Rejected · Trade-offs · Interview line.**
 
 ### Q15. How do we bound cost on a public URL?
 
-- **Decision:** Generation already has `max_tokens` 32k, a 300 s deadline, and prompt/file/project caps. Anthropic’s **console spend limit** is set operationally. Per-preview bridge budgets cap HighLevel calls from one iframe (abuse of the proxy, not assignment bonus R-B4). In-app Cloud Function rate limits, a global daily cap, and a kill switch are **out of v1** (R-B4).
-- **Why:** The assignment lists rate limiting as a bonus. Input caps are LLM engineering (R-BE4), not that bonus.
-- **Interview line:** _"We bound what the model can emit; spend is capped at the provider."_
+- **Decision:** Generation has `max_tokens` 32k, a 300 s deadline, and prompt/file/project caps. Anthropic’s **console spend limit** is set operationally. Per-preview bridge budgets cap HighLevel calls from one iframe. In-app limits (R-B4): generation 10 / 10 min and 40 / day per user, global 200 / day, HighLevel proxy 240 / min per instance, OAuth start 5 / min, file save 60 / min, snapshot restore 10 / 10 min, plus `GENERATION_ENABLED`.
+- **Why:** Open sign-up must not let one account drain the daily cap or flood HighLevel.
+- **Interview line:** _"We bound what the model can emit, and we meter the endpoints that cost money."_
 
 ### Q16. Why Firebase only — no Redis, queues, Storage, Cloud Run services?
 

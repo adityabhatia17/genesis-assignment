@@ -1,4 +1,4 @@
-import { RUNTIME_METHOD_NAMES } from '../../../src/contracts/hl-runtime.js';
+import { RUNTIME_EVENT_NAMES, RUNTIME_METHOD_NAMES } from '../../../src/contracts/hl-runtime.js';
 import {
   PROMPT_VERSION,
   SYSTEM_PROMPT_V1,
@@ -9,7 +9,8 @@ describe('system prompt v1', () => {
     for (const name of RUNTIME_METHOD_NAMES) expect(SYSTEM_PROMPT_V1).toContain(`${name}(`);
   });
   it('states the protocol and key constraints', () => {
-    expect(PROMPT_VERSION).toBe('v2');
+    expect(PROMPT_VERSION).toBe('v4');
+    for (const name of RUNTIME_EVENT_NAMES) expect(SYSTEM_PROMPT_V1).toContain(name);
     for (const s of [
       '⟦FILE path=',
       '⟦/FILE⟧',
@@ -21,6 +22,8 @@ describe('system prompt v1', () => {
       'show a Load more control',
       'One click loads one page',
       'Do not loop until hasMore is false',
+      'window.genesis.on(name, handler)',
+      'debounce about 500 ms',
     ]) {
       expect(SYSTEM_PROMPT_V1).toContain(s);
     }

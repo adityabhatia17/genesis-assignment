@@ -22,6 +22,8 @@ describe('parseRuntimeConfig', () => {
     expect(c.anthropicWorkspaceId).toBe('');
     expect(c.anthropicFastMode).toBe(false);
     expect(c.hlExtendedMethods).toBe(false);
+    expect(c.generationEnabled).toBe(true);
+    expect(c.generationDailyGlobalCap).toBe(200);
   });
   it('rejects the word highlevel in the redirect URI', () => {
     expect(() =>
@@ -32,6 +34,16 @@ describe('parseRuntimeConfig', () => {
     expect(
       parseRuntimeConfig({ ...raw, ANTHROPIC_WORKSPACE_ID: 'wrkspc_test' }).anthropicWorkspaceId,
     ).toBe('wrkspc_test');
+  });
+  it('reads the generation kill switch and daily cap', () => {
+    const c = parseRuntimeConfig({
+      ...raw,
+      GENERATION_ENABLED: 'false',
+      GENERATION_DAILY_GLOBAL_CAP: '40',
+    });
+    expect(c.generationEnabled).toBe(false);
+    expect(c.generationDailyGlobalCap).toBe(40);
+    expect(() => parseRuntimeConfig({ ...raw, GENERATION_DAILY_GLOBAL_CAP: -1 })).toThrow();
   });
   it('rejects unknown effort', () => {
     expect(() => parseRuntimeConfig({ ...raw, ANTHROPIC_EFFORT: 'ultra' })).toThrow();

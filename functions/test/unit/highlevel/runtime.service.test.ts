@@ -1,6 +1,8 @@
 import { HlApiError } from '../../../src/modules/highlevel/client/hl-errors.js';
 import type { AccessGrant } from '../../../src/modules/highlevel/connection/token-manager.js';
 import { RuntimeService } from '../../../src/modules/highlevel/runtime/runtime.service.js';
+import { MemoryRateLimiter, RATE_LIMITS } from '../../../src/modules/rate-limit/rate-limiter.js';
+import { createFakeClock } from '../../../src/shared/clock.js';
 import type {
   ProjectAccessPort,
   ProjectRecord,
@@ -27,6 +29,7 @@ function setup(
     project?: ProjectRecord;
     handler?: (token: string) => Promise<unknown>;
     scopes?: string[];
+    limiter?: MemoryRateLimiter;
   } = {},
 ) {
   const bound: string[] = [];
@@ -60,6 +63,7 @@ function setup(
     tokens,
     connections: new InMemoryConnectionRepo(),
     hl: { request: () => Promise.resolve(null) },
+    limiter: opts.limiter ?? new MemoryRateLimiter(createFakeClock(0)),
     handlers: { 'contacts.list': handler, 'calendars.events': handler },
   });
   return { service, tokens, handler, bound };
@@ -129,6 +133,25 @@ describe('RuntimeService', () => {
     ).rejects.toMatchObject({
       code: 'HL_RATE_LIMITED',
     });
+  });
+  it('does not spend the proxy budget on a rejected parameter set', async () => {
+    const limiter = new MemoryRateLimiter(createFakeClock(0));
+    const s = setup({ limiter });
+    await expect(
+      s.service.invoke('u', 'p1', 'contacts.list', { limit: 999 }, fakeLogger()),
+    ).rejects.toThrow();
+    for (let i = 0; i < RATE_LIMITS.hlProxy.limit - 1; i++) {
+      await limiter.consume(RATE_LIMITS.hlProxy, 'u');
+    }
+    await expect(
+      s.service.invoke('u', 'p1', 'contacts.list', { limit: 5 }, fakeLogger()),
+    ).resolves.toEqual({
+      ok: 't0',
+    });
+    await expect(
+      s.service.invoke('u', 'p1', 'contacts.list', { limit: 5 }, fakeLogger()),
+    ).rejects.toMatchObject({ code: 'RATE_LIMITED', retryable: true });
+    expect(s.handler).toHaveBeenCalledTimes(1);
   });
   it('checks granted scopes when known', async () => {
     const s = setup({ scopes: ['contacts.readonly'] });

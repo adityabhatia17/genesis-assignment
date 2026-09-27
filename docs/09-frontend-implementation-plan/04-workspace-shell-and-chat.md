@@ -22,32 +22,32 @@
 `frontend/tests/features/workspace/stores/workspace.store.test.ts`:
 
 ```ts
-import { createPinia, setActivePinia } from "pinia";
-import { useWorkspaceStore } from "@/features/workspace/stores/workspace.store";
+import { createPinia, setActivePinia } from 'pinia';
+import { useWorkspaceStore } from '@/features/workspace/stores/workspace.store';
 
-describe("workspace store", () => {
+describe('workspace store', () => {
   beforeEach(() => {
     setActivePinia(createPinia());
   });
 
-  it("opens, activates and closes tabs predictably", () => {
+  it('opens, activates and closes tabs predictably', () => {
     const ws = useWorkspaceStore();
-    ws.reset("p1");
-    ws.openFile("index.html");
-    ws.openFile("app.js");
-    ws.openFile("styles.css", false);
-    expect(ws.openPaths).toEqual(["index.html", "app.js", "styles.css"]);
-    expect(ws.activePath).toBe("app.js");
-    ws.closeFile("app.js");
-    expect(ws.activePath).toBe("styles.css");
+    ws.reset('p1');
+    ws.openFile('index.html');
+    ws.openFile('app.js');
+    ws.openFile('styles.css', false);
+    expect(ws.openPaths).toEqual(['index.html', 'app.js', 'styles.css']);
+    expect(ws.activePath).toBe('app.js');
+    ws.closeFile('app.js');
+    expect(ws.activePath).toBe('styles.css');
   });
 
-  it("drops tabs and flags for deleted files", () => {
+  it('drops tabs and flags for deleted files', () => {
     const ws = useWorkspaceStore();
-    ws.reset("p1");
-    ws.openFile("old.js");
-    ws.setDirty("old.js", true);
-    ws.retainPaths(["index.html"]);
+    ws.reset('p1');
+    ws.openFile('old.js');
+    ws.setDirty('old.js', true);
+    ws.retainPaths(['index.html']);
     expect(ws.openPaths).toEqual([]);
     expect(ws.dirtyPaths).toEqual([]);
   });
@@ -59,29 +59,21 @@ describe("workspace store", () => {
 `frontend/src/services/firestore/files.repo.ts`:
 
 ```ts
-import { query, type Query } from "firebase/firestore";
-import { refs } from "./paths";
-import type { ProjectFile } from "./types";
+import { query, type Query } from 'firebase/firestore';
+import { refs } from './paths';
+import type { ProjectFile } from './types';
 
 /** The whole working tree (≤ 25 files, ≤ 300 KB) — small enough to listen to in full. */
-export const filesQuery = (
-  uid: string,
-  projectId: string,
-): Query<ProjectFile> => query(refs.files(uid, projectId));
+export const filesQuery = (uid: string, projectId: string): Query<ProjectFile> =>
+  query(refs.files(uid, projectId));
 ```
 
 `frontend/src/features/workspace/workspace-context.ts`:
 
 ```ts
-import {
-  inject,
-  provide,
-  type InjectionKey,
-  type Ref,
-  type ShallowRef,
-} from "vue";
-import type { Project, ProjectFile } from "@/services/firestore/types";
-import type { EditorModels } from "./editor/editor-models";
+import { inject, provide, type InjectionKey, type Ref, type ShallowRef } from 'vue';
+import type { Project, ProjectFile } from '@/services/firestore/types';
+import type { EditorModels } from './editor/editor-models';
 
 /** Per-project context provided by WorkspacePage to every panel. Non-reactive objects stay raw. */
 export interface WorkspaceContext {
@@ -93,7 +85,7 @@ export interface WorkspaceContext {
   readonly models: EditorModels;
 }
 
-const WorkspaceKey: InjectionKey<WorkspaceContext> = Symbol("workspace");
+const WorkspaceKey: InjectionKey<WorkspaceContext> = Symbol('workspace');
 
 export function provideWorkspace(context: WorkspaceContext): void {
   provide(WorkspaceKey, context);
@@ -101,8 +93,7 @@ export function provideWorkspace(context: WorkspaceContext): void {
 
 export function useWorkspace(): WorkspaceContext {
   const context = inject(WorkspaceKey);
-  if (!context)
-    throw new Error("useWorkspace() must be used inside WorkspacePage");
+  if (!context) throw new Error('useWorkspace() must be used inside WorkspacePage');
   return context;
 }
 ```
@@ -110,11 +101,11 @@ export function useWorkspace(): WorkspaceContext {
 `frontend/src/features/workspace/stores/workspace.store.ts`:
 
 ```ts
-import { useLocalStorage } from "@vueuse/core";
-import { defineStore } from "pinia";
-import { ref } from "vue";
+import { useLocalStorage } from '@vueuse/core';
+import { defineStore } from 'pinia';
+import { ref } from 'vue';
 
-export type MobileTab = "chat" | "code" | "preview";
+export type MobileTab = 'chat' | 'code' | 'preview';
 
 export interface SaveConflict {
   path: string;
@@ -122,7 +113,7 @@ export interface SaveConflict {
 }
 
 /** Ephemeral UI state of one open project. Durable data lives in Firestore listeners. */
-export const useWorkspaceStore = defineStore("workspace", () => {
+export const useWorkspaceStore = defineStore('workspace', () => {
   const projectId = ref<string | null>(null);
   const openPaths = ref<string[]>([]);
   const activePath = ref<string | null>(null);
@@ -133,9 +124,9 @@ export const useWorkspaceStore = defineStore("workspace", () => {
   const previewNonce = ref(0);
   const consoleOpen = ref(false);
   const historyOpen = ref(false);
-  const mobileTab = ref<MobileTab>("chat");
-  const followGeneration = useLocalStorage("genesis-follow-generation", true);
-  const treeCollapsed = useLocalStorage("genesis-tree-collapsed", false);
+  const mobileTab = ref<MobileTab>('chat');
+  const followGeneration = useLocalStorage('genesis-follow-generation', true);
+  const treeCollapsed = useLocalStorage('genesis-tree-collapsed', false);
 
   function reset(nextProjectId: string): void {
     projectId.value = nextProjectId;
@@ -148,12 +139,11 @@ export const useWorkspaceStore = defineStore("workspace", () => {
     previewNonce.value = 0;
     consoleOpen.value = false;
     historyOpen.value = false;
-    mobileTab.value = "chat";
+    mobileTab.value = 'chat';
   }
 
   function openFile(path: string, activate = true): void {
-    if (!openPaths.value.includes(path))
-      openPaths.value = [...openPaths.value, path];
+    if (!openPaths.value.includes(path)) openPaths.value = [...openPaths.value, path];
     if (activate) activePath.value = path;
   }
 
@@ -175,8 +165,7 @@ export const useWorkspaceStore = defineStore("workspace", () => {
   /** Drops tabs and flags for files that no longer exist (deleted by a generation or a restore). */
   function retainPaths(existing: readonly string[]): void {
     const keep = new Set(existing);
-    for (const path of openPaths.value.filter((p) => !keep.has(p)))
-      closeFile(path);
+    for (const path of openPaths.value.filter((p) => !keep.has(p))) closeFile(path);
     dirtyPaths.value = dirtyPaths.value.filter((p) => keep.has(p));
     conflictPaths.value = conflictPaths.value.filter((p) => keep.has(p));
   }
@@ -209,17 +198,11 @@ export const useWorkspaceStore = defineStore("workspace", () => {
 `frontend/src/features/workspace/composables/useProjectFiles.ts`:
 
 ```ts
-import {
-  useFirestoreQuery,
-  type FirestoreQueryState,
-} from "@/composables/useFirestoreQuery";
-import { filesQuery } from "@/services/firestore/files.repo";
-import type { ProjectFile } from "@/services/firestore/types";
+import { useFirestoreQuery, type FirestoreQueryState } from '@/composables/useFirestoreQuery';
+import { filesQuery } from '@/services/firestore/files.repo';
+import type { ProjectFile } from '@/services/firestore/types';
 
-export function useProjectFiles(
-  uid: string,
-  projectId: string,
-): FirestoreQueryState<ProjectFile> {
+export function useProjectFiles(uid: string, projectId: string): FirestoreQueryState<ProjectFile> {
   return useFirestoreQuery(() => filesQuery(uid, projectId));
 }
 ```
@@ -228,29 +211,29 @@ export function useProjectFiles(
 
 ```vue
 <script setup lang="ts">
-import { onBeforeUnmount } from "vue";
-import PageState from "@/components/common/PageState.vue";
-import { useAuth } from "@/composables/useAuth";
-import { useFirestoreDoc } from "@/composables/useFirestoreDoc";
-import SnapshotHistorySheet from "@/features/snapshots/SnapshotHistorySheet.vue";
-import { toUserMessage } from "@/lib/errors";
-import { refs } from "@/services/firestore/paths";
-import { useGeneration } from "./composables/useGeneration";
-import { useProjectFiles } from "./composables/useProjectFiles";
-import { useRemoteFileSync } from "./composables/useRemoteFileSync";
-import { useStreamingEditor } from "./composables/useStreamingEditor";
-import { useWorkspaceShortcuts } from "./composables/useWorkspaceShortcuts";
-import { EditorModels } from "./editor/editor-models";
-import { setupMonaco } from "./editor/monaco-setup";
-import { useWorkspaceStore } from "./stores/workspace.store";
-import { provideWorkspace } from "./workspace-context";
-import WorkspaceHeader from "./WorkspaceHeader.vue";
-import WorkspaceLayout from "./WorkspaceLayout.vue";
+import { onBeforeUnmount } from 'vue';
+import PageState from '@/components/common/PageState.vue';
+import { useAuth } from '@/composables/useAuth';
+import { useFirestoreDoc } from '@/composables/useFirestoreDoc';
+import SnapshotHistorySheet from '@/features/snapshots/SnapshotHistorySheet.vue';
+import { toUserMessage } from '@/lib/errors';
+import { refs } from '@/services/firestore/paths';
+import { useGeneration } from './composables/useGeneration';
+import { useProjectFiles } from './composables/useProjectFiles';
+import { useRemoteFileSync } from './composables/useRemoteFileSync';
+import { useStreamingEditor } from './composables/useStreamingEditor';
+import { useWorkspaceShortcuts } from './composables/useWorkspaceShortcuts';
+import { EditorModels } from './editor/editor-models';
+import { setupMonaco } from './editor/monaco-setup';
+import { useWorkspaceStore } from './stores/workspace.store';
+import { provideWorkspace } from './workspace-context';
+import WorkspaceHeader from './WorkspaceHeader.vue';
+import WorkspaceLayout from './WorkspaceLayout.vue';
 
 // The route guard guarantees a user; the page is keyed by path, so projectId is fixed for its lifetime.
 const props = defineProps<{ projectId: string }>();
 const { uid: authUid } = useAuth();
-const uid = authUid.value ?? "";
+const uid = authUid.value ?? '';
 
 const workspace = useWorkspaceStore();
 workspace.reset(props.projectId);
@@ -279,12 +262,7 @@ onBeforeUnmount(() => models.disposeAll());
 </script>
 
 <template>
-  <PageState
-    v-if="project.loading.value"
-    kind="loading"
-    title="Opening project"
-    class="h-dvh"
-  />
+  <PageState v-if="project.loading.value" kind="loading" title="Opening project" class="h-dvh" />
   <PageState
     v-else-if="project.error.value"
     kind="error"
@@ -315,24 +293,20 @@ onBeforeUnmount(() => models.disposeAll());
 
 ```vue
 <script setup lang="ts">
-import { ArrowLeftIcon, HistoryIcon, PencilIcon } from "@lucide/vue";
-import { ref } from "vue";
-import { RouterLink } from "vue-router";
-import { toast } from "vue-sonner";
-import UserMenu from "@/components/common/UserMenu.vue";
-import { Button } from "@/components/ui/button";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
-import ConnectionBadge from "@/features/highlevel/ConnectionBadge.vue";
-import ProjectFormDialog from "@/features/projects/ProjectFormDialog.vue";
-import type { ProjectFormValues } from "@/features/projects/project-form.schema";
-import { updateProject } from "@/services/firestore/projects.repo";
-import GenerationStatusPill from "./chat/GenerationStatusPill.vue";
-import { useWorkspaceStore } from "./stores/workspace.store";
-import { useWorkspace } from "./workspace-context";
+import { ArrowLeftIcon, HistoryIcon, PencilIcon } from '@lucide/vue';
+import { ref } from 'vue';
+import { RouterLink } from 'vue-router';
+import { toast } from 'vue-sonner';
+import UserMenu from '@/components/common/UserMenu.vue';
+import { Button } from '@/components/ui/button';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import ConnectionBadge from '@/features/highlevel/ConnectionBadge.vue';
+import ProjectFormDialog from '@/features/projects/ProjectFormDialog.vue';
+import type { ProjectFormValues } from '@/features/projects/project-form.schema';
+import { updateProject } from '@/services/firestore/projects.repo';
+import GenerationStatusPill from './chat/GenerationStatusPill.vue';
+import { useWorkspaceStore } from './stores/workspace.store';
+import { useWorkspace } from './workspace-context';
 
 const ws = useWorkspace();
 const workspace = useWorkspaceStore();
@@ -340,7 +314,7 @@ const renameOpen = ref(false);
 
 async function rename(values: ProjectFormValues): Promise<void> {
   await updateProject(ws.uid, ws.projectId, values);
-  toast.success("Project updated");
+  toast.success('Project updated');
 }
 </script>
 
@@ -348,12 +322,7 @@ async function rename(values: ProjectFormValues): Promise<void> {
   <header class="flex h-12 shrink-0 items-center gap-2 border-b px-2 sm:px-3">
     <Tooltip>
       <TooltipTrigger as-child>
-        <Button
-          as-child
-          variant="ghost"
-          size="icon-sm"
-          aria-label="Back to projects"
-        >
+        <Button as-child variant="ghost" size="icon-sm" aria-label="Back to projects">
           <RouterLink :to="{ name: 'dashboard' }"><ArrowLeftIcon /></RouterLink>
         </Button>
       </TooltipTrigger>
@@ -378,11 +347,7 @@ async function rename(values: ProjectFormValues): Promise<void> {
       </Button>
       <UserMenu />
     </div>
-    <ProjectFormDialog
-      v-model:open="renameOpen"
-      :project="ws.project.value"
-      :submit="rename"
-    />
+    <ProjectFormDialog v-model:open="renameOpen" :project="ws.project.value" :submit="rename" />
   </header>
 </template>
 ```
@@ -391,25 +356,21 @@ async function rename(values: ProjectFormValues): Promise<void> {
 
 ```vue
 <script setup lang="ts">
-import { useMediaQuery } from "@vueuse/core";
-import { storeToRefs } from "pinia";
-import {
-  ResizableHandle,
-  ResizablePanel,
-  ResizablePanelGroup,
-} from "@/components/ui/resizable";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import ChatPanel from "./chat/ChatPanel.vue";
-import CodePanel from "./editor/CodePanel.vue";
-import PreviewPanel from "./preview/PreviewPanel.vue";
-import { useWorkspaceStore, type MobileTab } from "./stores/workspace.store";
+import { useMediaQuery } from '@vueuse/core';
+import { storeToRefs } from 'pinia';
+import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from '@/components/ui/resizable';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import ChatPanel from './chat/ChatPanel.vue';
+import CodePanel from './editor/CodePanel.vue';
+import PreviewPanel from './preview/PreviewPanel.vue';
+import { useWorkspaceStore, type MobileTab } from './stores/workspace.store';
 
-const wide = useMediaQuery("(min-width: 1024px)");
+const wide = useMediaQuery('(min-width: 1024px)');
 const workspace = useWorkspaceStore();
 const { mobileTab } = storeToRefs(workspace);
 
 function onTab(value: unknown): void {
-  if (value === "chat" || value === "code" || value === "preview")
+  if (value === 'chat' || value === 'code' || value === 'preview')
     mobileTab.value = value satisfies MobileTab;
 }
 </script>
@@ -421,17 +382,11 @@ function onTab(value: unknown): void {
     auto-save-id="genesis-workspace"
     class="min-h-0 flex-1"
   >
-    <ResizablePanel :default-size="28" :min-size="20"
-      ><ChatPanel
-    /></ResizablePanel>
+    <ResizablePanel :default-size="28" :min-size="20"><ChatPanel /></ResizablePanel>
     <ResizableHandle with-handle />
-    <ResizablePanel :default-size="40" :min-size="25"
-      ><CodePanel
-    /></ResizablePanel>
+    <ResizablePanel :default-size="40" :min-size="25"><CodePanel /></ResizablePanel>
     <ResizableHandle with-handle />
-    <ResizablePanel :default-size="32" :min-size="20"
-      ><PreviewPanel
-    /></ResizablePanel>
+    <ResizablePanel :default-size="32" :min-size="20"><PreviewPanel /></ResizablePanel>
   </ResizablePanelGroup>
   <Tabs
     v-else
@@ -446,19 +401,13 @@ function onTab(value: unknown): void {
       <TabsTrigger value="preview">Preview</TabsTrigger>
     </TabsList>
     <!-- Panels stay mounted (unmount-on-hide="false" on Tabs) so streams, models and the preview survive tab switches. -->
-    <TabsContent
-      value="chat"
-      class="min-h-0 flex-1 data-[state=inactive]:hidden"
+    <TabsContent value="chat" class="min-h-0 flex-1 data-[state=inactive]:hidden"
       ><ChatPanel
     /></TabsContent>
-    <TabsContent
-      value="code"
-      class="min-h-0 flex-1 data-[state=inactive]:hidden"
+    <TabsContent value="code" class="min-h-0 flex-1 data-[state=inactive]:hidden"
       ><CodePanel
     /></TabsContent>
-    <TabsContent
-      value="preview"
-      class="min-h-0 flex-1 data-[state=inactive]:hidden"
+    <TabsContent value="preview" class="min-h-0 flex-1 data-[state=inactive]:hidden"
       ><PreviewPanel
     /></TabsContent>
   </Tabs>
@@ -487,34 +436,34 @@ function onTab(value: unknown): void {
 `frontend/tests/features/workspace/chat/message-meta.test.ts`:
 
 ```ts
-import { describeMessageMeta } from "@/features/workspace/chat/message-meta";
+import { describeMessageMeta } from '@/features/workspace/chat/message-meta';
 
-describe("describeMessageMeta", () => {
-  it("summarizes a completed generation", () => {
+describe('describeMessageMeta', () => {
+  it('summarizes a completed generation', () => {
     expect(
-      describeMessageMeta("assistant", {
-        status: "completed",
-        changedPaths: ["index.html", "app.js"],
+      describeMessageMeta('assistant', {
+        status: 'completed',
+        changedPaths: ['index.html', 'app.js'],
         snapshotSeq: 4,
-        rejectedPaths: ["x.js"],
+        rejectedPaths: ['x.js'],
       }),
     ).toEqual({
-      text: "Changed index.html, app.js · Snapshot #4 · 1 file rejected",
-      tone: "warning",
+      text: 'Changed index.html, app.js · Snapshot #4 · 1 file rejected',
+      tone: 'warning',
     });
   });
-  it("shortens long lists and handles outcomes", () => {
+  it('shortens long lists and handles outcomes', () => {
     expect(
-      describeMessageMeta("system", {
-        changedPaths: ["a.js", "b.js", "c.js", "d.js"],
+      describeMessageMeta('system', {
+        changedPaths: ['a.js', 'b.js', 'c.js', 'd.js'],
         snapshotSeq: 8,
       })?.text,
-    ).toBe("Changed a.js, b.js, c.js +1 more · Snapshot #8");
-    expect(describeMessageMeta("assistant", { status: "failed" })).toEqual({
-      text: "Generation failed",
-      tone: "error",
+    ).toBe('Changed a.js, b.js, c.js +1 more · Snapshot #8');
+    expect(describeMessageMeta('assistant', { status: 'failed' })).toEqual({
+      text: 'Generation failed',
+      tone: 'error',
     });
-    expect(describeMessageMeta("user", { status: "completed" })).toBeNull();
+    expect(describeMessageMeta('user', { status: 'completed' })).toBeNull();
   });
 });
 ```
@@ -524,32 +473,22 @@ describe("describeMessageMeta", () => {
 `frontend/src/services/firestore/messages.repo.ts`:
 
 ```ts
-import { limitToLast, orderBy, query, type Query } from "firebase/firestore";
-import { refs } from "./paths";
-import type { ChatMessage } from "./types";
+import { limitToLast, orderBy, query, type Query } from 'firebase/firestore';
+import { refs } from './paths';
+import type { ChatMessage } from './types';
 
 export const MESSAGE_WINDOW = 200;
 
-export const messagesQuery = (
-  uid: string,
-  projectId: string,
-): Query<ChatMessage> =>
-  query(
-    refs.messages(uid, projectId),
-    orderBy("createdAt", "asc"),
-    limitToLast(MESSAGE_WINDOW),
-  );
+export const messagesQuery = (uid: string, projectId: string): Query<ChatMessage> =>
+  query(refs.messages(uid, projectId), orderBy('createdAt', 'asc'), limitToLast(MESSAGE_WINDOW));
 ```
 
 `frontend/src/features/workspace/composables/useProjectMessages.ts`:
 
 ```ts
-import {
-  useFirestoreQuery,
-  type FirestoreQueryState,
-} from "@/composables/useFirestoreQuery";
-import { messagesQuery } from "@/services/firestore/messages.repo";
-import type { ChatMessage } from "@/services/firestore/types";
+import { useFirestoreQuery, type FirestoreQueryState } from '@/composables/useFirestoreQuery';
+import { messagesQuery } from '@/services/firestore/messages.repo';
+import type { ChatMessage } from '@/services/firestore/types';
 
 export function useProjectMessages(
   uid: string,
@@ -562,48 +501,40 @@ export function useProjectMessages(
 `frontend/src/features/workspace/chat/message-meta.ts`:
 
 ```ts
-import type { MessageMeta } from "@/contracts/firestore-docs";
+import type { MessageMeta } from '@/contracts/firestore-docs';
 
 export interface MetaLine {
   text: string;
-  tone: "muted" | "warning" | "error";
+  tone: 'muted' | 'warning' | 'error';
 }
 
 export function formatPaths(paths: readonly string[], max = 3): string {
-  const shown = paths.slice(0, max).join(", ");
+  const shown = paths.slice(0, max).join(', ');
   return paths.length > max ? `${shown} +${paths.length - max} more` : shown;
 }
 
 /** The small line under an assistant/system message: "Changed app.js, styles.css · Snapshot #4". */
 export function describeMessageMeta(
-  role: "user" | "assistant" | "system",
+  role: 'user' | 'assistant' | 'system',
   meta: MessageMeta | null,
 ): MetaLine | null {
-  if (!meta || role === "user") return null;
-  if (meta.status === "failed")
-    return { text: "Generation failed", tone: "error" };
-  if (meta.status === "cancelled") return { text: "Cancelled", tone: "muted" };
-  if (meta.status === "interrupted")
-    return { text: "Interrupted", tone: "warning" };
+  if (!meta || role === 'user') return null;
+  if (meta.status === 'failed') return { text: 'Generation failed', tone: 'error' };
+  if (meta.status === 'cancelled') return { text: 'Cancelled', tone: 'muted' };
+  if (meta.status === 'interrupted') return { text: 'Interrupted', tone: 'warning' };
 
   const parts: string[] = [];
   const changed = meta.changedPaths ?? [];
   const deleted = meta.deletedPaths ?? [];
   if (changed.length > 0) parts.push(`Changed ${formatPaths(changed)}`);
   if (deleted.length > 0) parts.push(`Deleted ${formatPaths(deleted)}`);
-  if (
-    changed.length === 0 &&
-    deleted.length === 0 &&
-    meta.status === "completed"
-  )
-    parts.push("No file changes");
-  if (typeof meta.snapshotSeq === "number")
-    parts.push(`Snapshot #${meta.snapshotSeq}`);
+  if (changed.length === 0 && deleted.length === 0 && meta.status === 'completed')
+    parts.push('No file changes');
+  if (typeof meta.snapshotSeq === 'number') parts.push(`Snapshot #${meta.snapshotSeq}`);
   const rejected = meta.rejectedPaths?.length ?? 0;
-  if (rejected > 0)
-    parts.push(`${rejected} file${rejected === 1 ? "" : "s"} rejected`);
+  if (rejected > 0) parts.push(`${rejected} file${rejected === 1 ? '' : 's'} rejected`);
   return parts.length > 0
-    ? { text: parts.join(" · "), tone: rejected > 0 ? "warning" : "muted" }
+    ? { text: parts.join(' · '), tone: rejected > 0 ? 'warning' : 'muted' }
     : null;
 }
 ```
@@ -612,15 +543,13 @@ export function describeMessageMeta(
 
 ```vue
 <script setup lang="ts">
-import { computed } from "vue";
-import { cn } from "@/lib/utils";
-import type { ChatMessage } from "@/services/firestore/types";
-import { describeMessageMeta } from "./message-meta";
+import { computed } from 'vue';
+import { cn } from '@/lib/utils';
+import type { ChatMessage } from '@/services/firestore/types';
+import { describeMessageMeta } from './message-meta';
 
 const props = defineProps<{ message: ChatMessage }>();
-const meta = computed(() =>
-  describeMessageMeta(props.message.role, props.message.meta),
-);
+const meta = computed(() => describeMessageMeta(props.message.role, props.message.meta));
 </script>
 
 <template>
@@ -630,15 +559,11 @@ const meta = computed(() =>
   >
     <span class="h-px flex-1 bg-border" aria-hidden="true" />
     <span
-      >{{ props.message.content
-      }}<template v-if="meta"> · {{ meta.text }}</template></span
+      >{{ props.message.content }}<template v-if="meta"> · {{ meta.text }}</template></span
     >
     <span class="h-px flex-1 bg-border" aria-hidden="true" />
   </div>
-  <div
-    v-else-if="props.message.role === 'user'"
-    class="rounded-lg border bg-muted/40 px-3 py-2"
-  >
+  <div v-else-if="props.message.role === 'user'" class="rounded-lg border bg-muted/40 px-3 py-2">
     <p class="mb-1 text-[11px] font-medium text-muted-foreground">You</p>
     <p class="text-sm whitespace-pre-wrap">{{ props.message.content }}</p>
   </div>
@@ -665,14 +590,14 @@ const meta = computed(() =>
 
 ```vue
 <script setup lang="ts">
-import { ArrowDownIcon } from "@lucide/vue";
-import { useEventListener } from "@vueuse/core";
-import { nextTick, onMounted, ref, shallowRef, watch } from "vue";
-import { Button } from "@/components/ui/button";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Skeleton } from "@/components/ui/skeleton";
-import type { ChatMessage } from "@/services/firestore/types";
-import MessageItem from "./MessageItem.vue";
+import { ArrowDownIcon } from '@lucide/vue';
+import { useEventListener } from '@vueuse/core';
+import { nextTick, onMounted, ref, shallowRef, watch } from 'vue';
+import { Button } from '@/components/ui/button';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Skeleton } from '@/components/ui/skeleton';
+import type { ChatMessage } from '@/services/firestore/types';
+import MessageItem from './MessageItem.vue';
 
 const props = defineProps<{
   messages: ChatMessage[];
@@ -691,13 +616,11 @@ function scrollToBottom(): void {
 
 onMounted(() => {
   viewport.value =
-    root.value?.querySelector<HTMLElement>(
-      '[data-slot="scroll-area-viewport"]',
-    ) ?? null;
+    root.value?.querySelector<HTMLElement>('[data-slot="scroll-area-viewport"]') ?? null;
   scrollToBottom();
 });
 
-useEventListener(viewport, "scroll", () => {
+useEventListener(viewport, 'scroll', () => {
   const el = viewport.value;
   if (el) pinned.value = el.scrollHeight - el.scrollTop - el.clientHeight < 48;
 });
@@ -721,11 +644,7 @@ watch(
           <Skeleton class="h-14 w-3/4 self-end" />
           <Skeleton class="h-20 w-5/6" />
         </template>
-        <MessageItem
-          v-for="message in props.messages"
-          :key="message.id"
-          :message="message"
-        />
+        <MessageItem v-for="message in props.messages" :key="message.id" :message="message" />
         <slot />
       </div>
     </ScrollArea>
@@ -755,60 +674,53 @@ The transcript is document-like (labels "You" / "Genesis", system notes as divid
 - Create: `frontend/src/features/workspace/chat/PromptComposer.vue`, `ExamplePrompts.vue`, `ChatPanel.vue`
 - Test: `frontend/tests/features/workspace/chat/PromptComposer.test.ts`
 
-**Interfaces:** `PromptComposer` props `{ busy, blockedReason, hlConnected }`, `v-model` text, emits `submit(prompt)`. No Stop control (assignment bonus R-B1). `ChatPanel` composes list, live message (FE-4.3), outcome banner (FE-4.5) and composer; it blocks sending while offline or while there are unsaved editor changes (so a generation never overwrites unsaved text).
+**Interfaces:** `PromptComposer` props `{ busy, cancelling, canCancel, blockedReason, hlConnected }`, `v-model` text, emits `submit(prompt)` and `cancel`. Stop is shown while a generation is active and enabled only for `streaming` and `reconciling` (R-B1). `ChatPanel` composes list, live message (FE-4.3), outcome banner (FE-4.5) and composer; it blocks sending while offline or while there are unsaved editor changes (so a generation never overwrites unsaved text).
 
 - [ ] **Step 1: Failing test**
 
 `frontend/tests/features/workspace/chat/PromptComposer.test.ts`:
 
 ```ts
-import { mount } from "@vue/test-utils";
-import PromptComposer from "@/features/workspace/chat/PromptComposer.vue";
+import { mount } from '@vue/test-utils';
+import PromptComposer from '@/features/workspace/chat/PromptComposer.vue';
 
 const props = { busy: false, blockedReason: null, hlConnected: true };
 
-describe("PromptComposer", () => {
-  it("submits with Cmd/Ctrl+Enter and clears", async () => {
+describe('PromptComposer', () => {
+  it('submits with Cmd/Ctrl+Enter and clears', async () => {
     const wrapper = mount(PromptComposer, {
       props: {
         ...props,
-        modelValue: "Add a search box",
-        "onUpdate:modelValue": (v: string) =>
-          wrapper.setProps({ modelValue: v }),
+        modelValue: 'Add a search box',
+        'onUpdate:modelValue': (v: string) => wrapper.setProps({ modelValue: v }),
       },
     });
-    await wrapper
-      .get("textarea")
-      .trigger("keydown", { key: "Enter", ctrlKey: true });
-    expect(wrapper.emitted("submit")).toEqual([["Add a search box"]]);
-    expect(wrapper.props("modelValue")).toBe("");
+    await wrapper.get('textarea').trigger('keydown', { key: 'Enter', ctrlKey: true });
+    expect(wrapper.emitted('submit')).toEqual([['Add a search box']]);
+    expect(wrapper.props('modelValue')).toBe('');
   });
 
-  it("is disabled when blocked, empty or too long", async () => {
+  it('is disabled when blocked, empty or too long', async () => {
     const wrapper = mount(PromptComposer, {
-      props: { ...props, modelValue: "", blockedReason: "You're offline." },
+      props: { ...props, modelValue: '', blockedReason: "You're offline." },
     });
     expect(wrapper.text()).toContain("You're offline.");
-    const send = wrapper
-      .findAll("button")
-      .find((b) => b.text().includes("Send"))!;
-    expect(send.attributes("disabled")).toBeDefined();
+    const send = wrapper.findAll('button').find((b) => b.text().includes('Send'))!;
+    expect(send.attributes('disabled')).toBeDefined();
     await wrapper.setProps({
       blockedReason: null,
-      modelValue: "x".repeat(4001),
+      modelValue: 'x'.repeat(4001),
     });
-    expect(wrapper.text()).toContain("4001/4000");
-    expect(send.attributes("disabled")).toBeDefined();
+    expect(wrapper.text()).toContain('4001/4000');
+    expect(send.attributes('disabled')).toBeDefined();
   });
 
-  it("disables Send while generating", () => {
+  it('disables Send while generating', () => {
     const wrapper = mount(PromptComposer, {
-      props: { ...props, busy: true, modelValue: "hi" },
+      props: { ...props, busy: true, modelValue: 'hi' },
     });
-    const send = wrapper
-      .findAll("button")
-      .find((b) => b.text().includes("Send"));
-    expect(send?.attributes("disabled")).toBeDefined();
+    const send = wrapper.findAll('button').find((b) => b.text().includes('Send'));
+    expect(send?.attributes('disabled')).toBeDefined();
   });
 });
 ```
@@ -819,13 +731,13 @@ describe("PromptComposer", () => {
 
 ```vue
 <script setup lang="ts">
-import { SendIcon } from "@lucide/vue";
-import { useTextareaAutosize } from "@vueuse/core";
-import { computed, ref } from "vue";
-import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
-import { LIMITS } from "@/contracts/limits";
-import { cn } from "@/lib/utils";
+import { SendIcon } from '@lucide/vue';
+import { useTextareaAutosize } from '@vueuse/core';
+import { computed, ref } from 'vue';
+import { Button } from '@/components/ui/button';
+import { Textarea } from '@/components/ui/textarea';
+import { LIMITS } from '@/contracts/limits';
+import { cn } from '@/lib/utils';
 
 const props = defineProps<{
   /** A generation is running (Send disabled). */
@@ -835,33 +747,28 @@ const props = defineProps<{
   hlConnected: boolean;
 }>();
 const emit = defineEmits<{ submit: [prompt: string] }>();
-const text = defineModel<string>({ default: "" });
+const text = defineModel<string>({ default: '' });
 
 const box = ref<HTMLElement | null>(null);
-const element = computed(() => box.value?.querySelector("textarea") ?? null);
+const element = computed(() => box.value?.querySelector('textarea') ?? null);
 useTextareaAutosize({ element, input: text, maxHeight: 240 });
 
 const length = computed(() => text.value.length);
 const tooLong = computed(() => length.value > LIMITS.promptMaxChars);
 const canSend = computed(
   () =>
-    !props.busy &&
-    props.blockedReason === null &&
-    text.value.trim().length > 0 &&
-    !tooLong.value,
+    !props.busy && props.blockedReason === null && text.value.trim().length > 0 && !tooLong.value,
 );
-const isMac =
-  typeof navigator !== "undefined" &&
-  /Mac|iPhone|iPad/.test(navigator.platform);
+const isMac = typeof navigator !== 'undefined' && /Mac|iPhone|iPad/.test(navigator.platform);
 
 function send(): void {
   if (!canSend.value) return;
-  emit("submit", text.value.trim());
-  text.value = "";
+  emit('submit', text.value.trim());
+  text.value = '';
 }
 
 function onKeydown(event: KeyboardEvent): void {
-  if (event.key === "Enter" && (event.metaKey || event.ctrlKey)) {
+  if (event.key === 'Enter' && (event.metaKey || event.ctrlKey)) {
     event.preventDefault();
     send();
   }
@@ -877,9 +784,7 @@ function onKeydown(event: KeyboardEvent): void {
       ref="box"
       class="rounded-lg border bg-background focus-within:ring-2 focus-within:ring-ring/40"
     >
-      <label for="prompt" class="sr-only"
-        >Describe what to build or change</label
-      >
+      <label for="prompt" class="sr-only">Describe what to build or change</label>
       <Textarea
         id="prompt"
         v-model="text"
@@ -893,10 +798,7 @@ function onKeydown(event: KeyboardEvent): void {
       <div class="flex items-center gap-2 px-2 pb-2">
         <span
           :class="
-            cn(
-              'text-xs tabular-nums',
-              tooLong ? 'text-destructive' : 'text-muted-foreground',
-            )
+            cn('text-xs tabular-nums', tooLong ? 'text-destructive' : 'text-muted-foreground')
           "
         >
           {{ length }}/{{ LIMITS.promptMaxChars }}
@@ -909,14 +811,9 @@ function onKeydown(event: KeyboardEvent): void {
           {{ props.blockedReason }}
         </span>
         <span v-else class="hidden text-xs text-muted-foreground sm:inline">
-          {{ isMac ? "⌘" : "Ctrl" }}+Enter to send
+          {{ isMac ? '⌘' : 'Ctrl' }}+Enter to send
         </span>
-        <Button
-          class="ml-auto"
-          size="sm"
-          :disabled="!canSend || props.busy"
-          @click="send"
-        >
+        <Button class="ml-auto" size="sm" :disabled="!canSend || props.busy" @click="send">
           <SendIcon />Send
         </Button>
       </div>
@@ -929,13 +826,13 @@ function onKeydown(event: KeyboardEvent): void {
 
 ```vue
 <script setup lang="ts">
-import { Button } from "@/components/ui/button";
+import { Button } from '@/components/ui/button';
 
 const emit = defineEmits<{ pick: [prompt: string] }>();
 
 const EXAMPLES = [
-  "Contact dashboard with search and upcoming appointments",
-  "Conversations inbox with a message thread",
+  'Contact dashboard with search and upcoming appointments',
+  'Conversations inbox with a message thread',
   "This week's calendar appointments",
 ] as const;
 </script>
@@ -963,20 +860,20 @@ const EXAMPLES = [
 
 ```vue
 <script setup lang="ts">
-import { useOnline } from "@vueuse/core";
-import { storeToRefs } from "pinia";
-import { computed, ref } from "vue";
-import { useHighLevelConnection } from "@/features/highlevel/useHighLevelConnection";
-import { useProjectMessages } from "../composables/useProjectMessages";
-import { isActive } from "../stores/generation.reducer";
-import { useGenerationStore } from "../stores/generation.store";
-import { useWorkspaceStore } from "../stores/workspace.store";
-import { useWorkspace } from "../workspace-context";
-import ExamplePrompts from "./ExamplePrompts.vue";
-import GenerationOutcomeBanner from "./GenerationOutcomeBanner.vue";
-import LiveAssistantMessage from "./LiveAssistantMessage.vue";
-import MessageList from "./MessageList.vue";
-import PromptComposer from "./PromptComposer.vue";
+import { useOnline } from '@vueuse/core';
+import { storeToRefs } from 'pinia';
+import { computed, ref } from 'vue';
+import { useHighLevelConnection } from '@/features/highlevel/useHighLevelConnection';
+import { useProjectMessages } from '../composables/useProjectMessages';
+import { isActive } from '../stores/generation.reducer';
+import { useGenerationStore } from '../stores/generation.store';
+import { useWorkspaceStore } from '../stores/workspace.store';
+import { useWorkspace } from '../workspace-context';
+import ExamplePrompts from './ExamplePrompts.vue';
+import GenerationOutcomeBanner from './GenerationOutcomeBanner.vue';
+import LiveAssistantMessage from './LiveAssistantMessage.vue';
+import MessageList from './MessageList.vue';
+import PromptComposer from './PromptComposer.vue';
 
 const ws = useWorkspace();
 const generation = useGenerationStore();
@@ -985,51 +882,37 @@ const { state } = storeToRefs(generation);
 const { status: hlStatus } = useHighLevelConnection();
 const online = useOnline();
 const { data: messages, loading } = useProjectMessages(ws.uid, ws.projectId);
-const draft = ref("");
+const draft = ref('');
 
 // Hide the live message once the persisted assistant message for this generation arrives.
 const persisted = computed(() =>
-  messages.value.some(
-    (m) =>
-      m.role === "assistant" && m.generationId === state.value.generationId,
-  ),
+  messages.value.some((m) => m.role === 'assistant' && m.generationId === state.value.generationId),
 );
-const showLive = computed(
-  () => state.value.status !== "idle" && !persisted.value,
-);
+const showLive = computed(() => state.value.status !== 'idle' && !persisted.value);
 const busy = computed(() => isActive(state.value.status));
 const liveKey = computed(
-  () =>
-    `${state.value.prose.length}:${state.value.fileOrder.length}:${state.value.status}`,
+  () => `${state.value.prose.length}:${state.value.fileOrder.length}:${state.value.status}`,
 );
 const empty = computed(
-  () =>
-    !loading.value &&
-    messages.value.length === 0 &&
-    ws.files.value.length === 0,
+  () => !loading.value && messages.value.length === 0 && ws.files.value.length === 0,
 );
 
 const blockedReason = computed(() => {
   if (!online.value) return "You're offline.";
-  if (workspace.dirtyPaths.length > 0)
-    return "Save or discard unsaved changes first.";
+  if (workspace.dirtyPaths.length > 0) return 'Save or discard unsaved changes first.';
   return null;
 });
 
 function openFile(path: string): void {
   workspace.openFile(path);
-  workspace.mobileTab = "code";
+  workspace.mobileTab = 'code';
 }
 </script>
 
 <template>
   <section class="flex h-full min-h-0 flex-col" aria-label="Chat">
     <MessageList :messages="messages" :loading="loading" :live-key="liveKey">
-      <LiveAssistantMessage
-        v-if="showLive"
-        :state="state"
-        @open-file="openFile"
-      />
+      <LiveAssistantMessage v-if="showLive" :state="state" @open-file="openFile" />
     </MessageList>
     <GenerationOutcomeBanner />
     <ExamplePrompts v-if="empty && !busy" @pick="draft = $event" />
