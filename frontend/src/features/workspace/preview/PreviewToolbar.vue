@@ -1,11 +1,17 @@
 <script setup lang="ts">
-import { RefreshCwIcon, TerminalIcon } from '@lucide/vue';
+import { Maximize2Icon, Minimize2Icon, RefreshCwIcon, TerminalIcon } from '@lucide/vue';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
-const props = defineProps<{ label: string; errorCount: number; consoleOpen: boolean }>();
-const emit = defineEmits<{ reload: []; 'toggle-console': [] }>();
+const props = defineProps<{
+  label: string;
+  errorCount: number;
+  consoleOpen: boolean;
+  expanded: boolean;
+  canExpand: boolean;
+}>();
+const emit = defineEmits<{ reload: []; 'toggle-console': []; 'toggle-expand': [] }>();
 </script>
 
 <template>
@@ -24,6 +30,24 @@ const emit = defineEmits<{ reload: []; 'toggle-console': [] }>();
           </Button>
         </TooltipTrigger>
         <TooltipContent>Reload preview</TooltipContent>
+      </Tooltip>
+      <Tooltip>
+        <TooltipTrigger as-child>
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            :aria-pressed="props.expanded"
+            :aria-label="props.expanded ? 'Exit full screen' : 'Expand preview'"
+            :disabled="!props.canExpand && !props.expanded"
+            @click="emit('toggle-expand')"
+          >
+            <Minimize2Icon v-if="props.expanded" />
+            <Maximize2Icon v-else />
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent>{{
+          props.expanded ? 'Exit full screen' : 'Expand preview'
+        }}</TooltipContent>
       </Tooltip>
       <Button
         variant="ghost"

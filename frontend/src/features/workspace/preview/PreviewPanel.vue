@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { PlugIcon } from '@lucide/vue';
-import { refDebounced } from '@vueuse/core';
+import { refDebounced, useEventListener } from '@vueuse/core';
 import { storeToRefs } from 'pinia';
 import { computed, onBeforeUnmount, ref, shallowRef, watch } from 'vue';
 import PageState from '@/components/common/PageState.vue';
@@ -28,6 +28,7 @@ const workspace = useWorkspaceStore();
 const { previewNonce, consoleOpen } = storeToRefs(workspace);
 const hl = useHighLevelConnection();
 
+const expanded = ref(false);
 const logs = shallowRef<BridgeLog[]>([]);
 const calls = shallowRef<BridgeCall[]>([]);
 const errorCount = computed(() => logs.value.filter((l) => l.level === 'error').length);
@@ -105,6 +106,15 @@ const mismatch = computed(() => {
   );
 });
 
+function toggleExpanded(): void {
+  if (!expanded.value && !compiled.value.html) return;
+  expanded.value = !expanded.value;
+}
+
+useEventListener(window, 'keydown', (event: KeyboardEvent) => {
+  if (event.key === 'Escape' && expanded.value) expanded.value = false;
+});
+
 function onNavigated(): void {
   logs.value = [
     ...logs.value,
@@ -119,13 +129,20 @@ function onNavigated(): void {
 </script>
 
 <template>
-  <section class="flex h-full min-h-0 flex-col" aria-label="Preview">
+  <section
+    class="flex min-h-0 flex-col bg-background"
+    :class="expanded ? 'fixed inset-0 z-50 h-dvh' : 'h-full'"
+    aria-label="Preview"
+  >
     <PreviewToolbar
       :label="label"
       :error-count="errorCount"
       :console-open="consoleOpen"
+      :expanded="expanded"
+      :can-expand="Boolean(compiled.html)"
       @reload="workspace.reloadPreview()"
       @toggle-console="consoleOpen = !consoleOpen"
+      @toggle-expand="toggleExpanded"
     />
     <Alert
       v-if="hl.status.value !== 'connected' && hl.status.value !== 'loading' && compiled.html"
@@ -178,6 +195,7 @@ function onNavigated(): void {
         logs = [];
         calls = [];
       "
+      @close="consoleOpen = false"
     />
   </section>
 </template>

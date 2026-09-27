@@ -6,7 +6,7 @@ All six assignment bonuses are implemented: cancellation, iterative refinement, 
 
 |                        |                                                                                                                                                                                     |
 | ---------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **App**                | [https://test-3ff4c.web.app](https://test-3ff4c.web.app)                                                                                                                            |
+| **App**                | [https://genesis-assignment.adityabhatia.in](https://genesis-assignment.adityabhatia.in) / [https://test-3ff4c.web.app](https://test-3ff4c.web.app)                                 |
 | **Cloud Functions**    | `https://us-central1-test-3ff4c.cloudfunctions.net` — `/api`, `/generate` (SSE), `/hlWebhook`                                                                                       |
 | **Health**             | `[/api/v1/health](https://us-central1-test-3ff4c.cloudfunctions.net/api/v1/health)` · `[/generate/v1/health](https://us-central1-test-3ff4c.cloudfunctions.net/generate/v1/health)` |
 | **Demo (Loom, 5 min)** | _link_                                                                                                                                                                              |
@@ -71,6 +71,8 @@ flowchart LR
 10. **Claude gets a bounded context with no contact or message data.** Each turn sends the current files, recent turns and location metadata (name, timezone, calendar names, contact count). Contact and message records never reach the model, and the system prompt marks everything it is given as data, not instructions. That keeps customer data away from the model provider and shrinks the prompt-injection surface. Sonnet 5 runs with adaptive thinking, a versioned cached system prompt and a server-side fallback model; a scripted provider behind the same interface (`LLM_PROVIDER=fake`) makes the whole pipeline testable offline.
 
     **Trade-off:** The whole project goes into every prompt, so a project is capped at 25 files / 300 KB; larger apps would need to send only the relevant files. Quality is guarded by validators and tests, not yet by an evaluation suite (improvement 1).
+
+The reasoning behind these, with rejected alternatives and the platform research, is in [`docs/`](docs/00-index.md).
 
 ## HighLevel setup
 

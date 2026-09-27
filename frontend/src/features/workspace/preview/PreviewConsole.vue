@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { EraserIcon } from '@lucide/vue';
+import { EraserIcon, XIcon } from '@lucide/vue';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -8,7 +8,7 @@ import { cn } from '@/lib/utils';
 import type { BridgeCall, BridgeLog } from './host-bridge';
 
 const props = defineProps<{ logs: BridgeLog[]; calls: BridgeCall[] }>();
-const emit = defineEmits<{ clear: [] }>();
+const emit = defineEmits<{ clear: []; close: [] }>();
 const time = (ms: number): string => new Date(ms).toLocaleTimeString(undefined, { hour12: false });
 </script>
 
@@ -19,15 +19,14 @@ const time = (ms: number): string => new Date(ms).toLocaleTimeString(undefined, 
         <TabsTrigger value="console" class="text-xs">Console</TabsTrigger>
         <TabsTrigger value="calls" class="text-xs">HighLevel calls</TabsTrigger>
       </TabsList>
-      <Button
-        variant="ghost"
-        size="icon-xs"
-        class="ml-auto"
-        aria-label="Clear"
-        @click="emit('clear')"
-      >
-        <EraserIcon />
-      </Button>
+      <div class="ml-auto flex items-center">
+        <Button variant="ghost" size="icon-xs" aria-label="Clear" @click="emit('clear')">
+          <EraserIcon />
+        </Button>
+        <Button variant="ghost" size="icon-xs" aria-label="Close console" @click="emit('close')">
+          <XIcon />
+        </Button>
+      </div>
     </div>
     <TabsContent value="console" class="min-h-0 flex-1">
       <ScrollArea class="h-full">
