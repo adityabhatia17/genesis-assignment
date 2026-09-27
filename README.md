@@ -9,7 +9,7 @@ All six assignment bonuses are implemented: cancellation, iterative refinement, 
 | **App**                | [https://genesis-assignment.adityabhatia.in](https://genesis-assignment.adityabhatia.in) / [https://test-3ff4c.web.app](https://test-3ff4c.web.app)                                 |
 | **Cloud Functions**    | `https://us-central1-test-3ff4c.cloudfunctions.net` — `/api`, `/generate` (SSE), `/hlWebhook`                                                                                       |
 | **Health**             | `[/api/v1/health](https://us-central1-test-3ff4c.cloudfunctions.net/api/v1/health)` · `[/generate/v1/health](https://us-central1-test-3ff4c.cloudfunctions.net/generate/v1/health)` |
-| **Demo (Loom, 5 min)** | _link_                                                                                                                                                                              |
+| **Demo (Loom, 5 min)** | [https://www.loom.com/share/60aae88c1122452b974db335f679fac6](https://www.loom.com/share/60aae88c1122452b974db335f679fac6)                                                          |
 | **Reviewer account**   | In the submission email (Genesis login only). The HighLevel sandbox sub-account is not shared.                                                                                      |
 
 ## Architecture

@@ -1,0 +1,99 @@
+<mxfile host="app.diagrams.net" agent="Genesis" version="22.1.0" type="device">
+  <diagram id="preview-trust" name="Preview trust boundary">
+    <mxGraphModel dx="1800" dy="1000" grid="0" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1800" pageHeight="1000" math="0" shadow="0" background="#FFFFFF" adaptiveColors="none">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+
+        <mxCell id="beforeBand" value="" style="rounded=1;arcSize=2;whiteSpace=wrap;html=1;fillColor=#FFF8F8;strokeColor=none;" vertex="1" parent="1">
+          <mxGeometry x="32" y="24" width="1736" height="430" as="geometry" />
+        </mxCell>
+        <mxCell id="nowBand" value="" style="rounded=1;arcSize=2;whiteSpace=wrap;html=1;fillColor=#F7F9FC;strokeColor=none;" vertex="1" parent="1">
+          <mxGeometry x="32" y="474" width="1736" height="494" as="geometry" />
+        </mxCell>
+
+        <mxCell id="beforeLabel" value="Before" style="text;html=1;align=left;verticalAlign=middle;fontFamily=Helvetica;fontSize=20;fontStyle=1;fontColor=#DC2626;" vertex="1" parent="1">
+          <mxGeometry x="150" y="44" width="160" height="32" as="geometry" />
+        </mxCell>
+        <mxCell id="beforeSub" value="The preview calls HighLevel directly. The token is in the file and on the request." style="text;html=1;align=left;verticalAlign=middle;fontFamily=Helvetica;fontSize=14;fontColor=#7F1D1D;" vertex="1" parent="1">
+          <mxGeometry x="250" y="46" width="900" height="28" as="geometry" />
+        </mxCell>
+
+        <mxCell id="bApp" value="&lt;b style=&quot;font-size:16px;color:#18181B;&quot;&gt;Generated app&lt;/b&gt;&lt;br&gt;&lt;span style=&quot;font-size:12px;color:#71717A;&quot;&gt;app.js · untrusted code&lt;/span&gt;" style="rounded=1;whiteSpace=wrap;html=1;arcSize=8;fillColor=#FFFFFF;strokeColor=#E4E4E7;strokeWidth=1;align=left;verticalAlign=top;spacingLeft=22;spacingTop=16;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="150" y="112" width="520" height="268" as="geometry" />
+        </mxCell>
+        <mxCell id="bCode" value="&lt;span style=&quot;color:#E4E4E7;&quot;&gt;fetch(highlevelUrl + &amp;quot;/contacts&amp;quot;, {&lt;/span&gt;&lt;br&gt;&lt;span style=&quot;color:#FCA5A5;&quot;&gt;  Authorization: &amp;quot;Bearer tok_••••&amp;quot;&lt;/span&gt;&lt;br&gt;&lt;span style=&quot;color:#E4E4E7;&quot;&gt;})&lt;/span&gt;" style="rounded=1;whiteSpace=wrap;html=1;arcSize=10;fillColor=#18181B;strokeColor=none;align=left;verticalAlign=middle;spacingLeft=16;spacingRight=12;fontFamily=Courier New;fontSize=13;fontColor=#E4E4E7;" vertex="1" parent="bApp">
+          <mxGeometry x="22" y="78" width="476" height="112" as="geometry" />
+        </mxCell>
+        <mxCell id="bCodeNote" value="The login is readable in this file." style="text;html=1;align=left;verticalAlign=middle;fontFamily=Helvetica;fontSize=13;fontStyle=1;fontColor=#DC2626;" vertex="1" parent="bApp">
+          <mxGeometry x="22" y="206" width="476" height="28" as="geometry" />
+        </mxCell>
+
+        <mxCell id="bWire" value="&lt;b style=&quot;font-size:14px;color:#991B1B;&quot;&gt;Direct API call&lt;/b&gt;&lt;br&gt;&lt;span style=&quot;font-size:13px;color:#B91C1C;font-family:Courier New;&quot;&gt;GET /contacts&lt;/span&gt;&lt;br&gt;&lt;span style=&quot;font-size:13px;color:#B91C1C;font-family:Courier New;&quot;&gt;Authorization: Bearer tok_••••&lt;/span&gt;" style="rounded=1;whiteSpace=wrap;html=1;arcSize=50;fillColor=#FEF2F2;strokeColor=#DC2626;strokeWidth=1.5;fontFamily=Helvetica;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="760" y="186" width="420" height="108" as="geometry" />
+        </mxCell>
+
+        <mxCell id="bHl" value="&lt;b style=&quot;font-size:16px;color:#18181B;&quot;&gt;HighLevel&lt;/b&gt;&lt;br&gt;&lt;br&gt;&lt;span style=&quot;font-size:13px;color:#52525B;&quot;&gt;Receives the token.&lt;br&gt;Returns the contacts.&lt;/span&gt;" style="rounded=1;whiteSpace=wrap;html=1;arcSize=8;fillColor=#FFFFFF;strokeColor=#E4E4E7;strokeWidth=1;verticalAlign=middle;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="1280" y="168" width="340" height="144" as="geometry" />
+        </mxCell>
+
+        <mxCell id="nowLabel" value="Now" style="text;html=1;align=left;verticalAlign=middle;fontFamily=Helvetica;fontSize=20;fontStyle=1;fontColor=#1D4ED8;" vertex="1" parent="1">
+          <mxGeometry x="184" y="498" width="120" height="32" as="geometry" />
+        </mxCell>
+        <mxCell id="nowSub" value="The preview cannot call HighLevel. It sends a note through a private pipe." style="text;html=1;align=left;verticalAlign=middle;fontFamily=Helvetica;fontSize=14;fontColor=#1E3A8A;" vertex="1" parent="1">
+          <mxGeometry x="264" y="500" width="900" height="28" as="geometry" />
+        </mxCell>
+
+        <mxCell id="nApp" value="&lt;b style=&quot;font-size:15px;color:#18181B;&quot;&gt;Generated app&lt;/b&gt;&lt;br&gt;&lt;br&gt;&lt;span style=&quot;font-size:13px;color:#52525B;&quot;&gt;No network.&lt;br&gt;Asks for contacts.&lt;br&gt;Holds no token.&lt;/span&gt;" style="rounded=1;whiteSpace=wrap;html=1;arcSize=8;fillColor=#FFFFFF;strokeColor=#E4E4E7;strokeWidth=1;verticalAlign=middle;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="184" y="572" width="220" height="148" as="geometry" />
+        </mxCell>
+        <mxCell id="nPipe" value="&lt;b style=&quot;font-size:14px;color:#1E3A8A;&quot;&gt;Private pipe&lt;/b&gt;&lt;br&gt;&lt;span style=&quot;font-size:13px;color:#1D4ED8;font-family:Courier New;&quot;&gt;contacts.list(&amp;quot;ada&amp;quot;)&lt;/span&gt;&lt;br&gt;&lt;span style=&quot;font-size:12px;color:#2563EB;&quot;&gt;no token&lt;/span&gt;" style="rounded=1;whiteSpace=wrap;html=1;arcSize=50;fillColor=#EFF6FF;strokeColor=#2563EB;strokeWidth=1.5;verticalAlign=middle;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="468" y="596" width="240" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="nPage" value="&lt;b style=&quot;font-size:15px;color:#18181B;&quot;&gt;Genesis page&lt;/b&gt;&lt;br&gt;&lt;br&gt;&lt;span style=&quot;font-size:13px;color:#52525B;&quot;&gt;Reads the note.&lt;br&gt;Listed reads only.&lt;/span&gt;" style="rounded=1;whiteSpace=wrap;html=1;arcSize=8;fillColor=#FFFFFF;strokeColor=#E4E4E7;strokeWidth=1;verticalAlign=middle;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="772" y="572" width="220" height="148" as="geometry" />
+        </mxCell>
+        <mxCell id="nFn" value="&lt;b style=&quot;font-size:15px;color:#FAFAFA;&quot;&gt;Cloud Function&lt;/b&gt;&lt;br&gt;&lt;br&gt;&lt;span style=&quot;font-size:13px;color:#D4D4D8;&quot;&gt;Holds the token.&lt;br&gt;Calls HighLevel.&lt;/span&gt;" style="rounded=1;whiteSpace=wrap;html=1;arcSize=8;fillColor=#18181B;strokeColor=#18181B;strokeWidth=1;fontColor=#FAFAFA;verticalAlign=middle;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="1056" y="572" width="220" height="148" as="geometry" />
+        </mxCell>
+        <mxCell id="nHl" value="&lt;b style=&quot;font-size:15px;color:#18181B;&quot;&gt;HighLevel&lt;/b&gt;&lt;br&gt;&lt;br&gt;&lt;span style=&quot;font-size:13px;color:#52525B;&quot;&gt;Returns the contacts.&lt;/span&gt;" style="rounded=1;whiteSpace=wrap;html=1;arcSize=8;fillColor=#FFFFFF;strokeColor=#E4E4E7;strokeWidth=1;verticalAlign=middle;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="1396" y="572" width="220" height="148" as="geometry" />
+        </mxCell>
+
+        <mxCell id="nowFoot" value="Names and emails come back along the bottom. The token never does." style="text;html=1;align=left;verticalAlign=middle;fontFamily=Helvetica;fontSize=14;fontColor=#3F3F46;" vertex="1" parent="1">
+          <mxGeometry x="184" y="900" width="700" height="28" as="geometry" />
+        </mxCell>
+        <mxCell id="nowKey" value="The token is used on one hop only." style="text;html=1;align=right;verticalAlign=middle;fontFamily=Helvetica;fontSize=14;fontStyle=1;fontColor=#18181B;" vertex="1" parent="1">
+          <mxGeometry x="980" y="900" width="638" height="28" as="geometry" />
+        </mxCell>
+
+        <mxCell id="e1" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;endArrow=blockThin;endFill=1;strokeColor=#DC2626;strokeWidth=2;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="bApp" target="bWire">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e2" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;endArrow=blockThin;endFill=1;strokeColor=#DC2626;strokeWidth=2;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="bWire" target="bHl">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e3" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;endArrow=blockThin;endFill=1;strokeColor=#2563EB;strokeWidth=2;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="nApp" target="nPipe">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e4" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;endArrow=blockThin;endFill=1;strokeColor=#2563EB;strokeWidth=2;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="nPipe" target="nPage">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e5" value="allowed" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;endArrow=blockThin;endFill=1;strokeColor=#A1A1AA;strokeWidth=1.75;fontFamily=Helvetica;fontSize=12;fontColor=#52525B;labelBackgroundColor=#F7F9FC;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="nPage" target="nFn">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e6" value="Bearer token" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;endArrow=blockThin;endFill=1;strokeColor=#18181B;strokeWidth=2.25;fontFamily=Helvetica;fontSize=12;fontStyle=1;fontColor=#18181B;labelBackgroundColor=#F7F9FC;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="nFn" target="nHl">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e7" value="names and emails · no token" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;endArrow=blockThin;endFill=1;strokeColor=#A1A1AA;strokeWidth=1.5;fontFamily=Helvetica;fontSize=13;fontColor=#3F3F46;labelBackgroundColor=#F7F9FC;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;" edge="1" parent="1" source="nHl" target="nApp">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1506" y="820" />
+              <mxPoint x="294" y="820" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
