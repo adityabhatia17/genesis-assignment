@@ -2,7 +2,7 @@
 import { onMounted, ref } from 'vue';
 import { PREVIEW_SANDBOX } from './preview-csp';
 
-const props = defineProps<{ html: string }>();
+const props = defineProps<{ html: string; title?: string }>();
 const emit = defineEmits<{ ready: [element: HTMLIFrameElement]; navigated: [] }>();
 const frame = ref<HTMLIFrameElement | null>(null);
 let loads = 0;
@@ -27,7 +27,7 @@ onMounted(() => {
     :srcdoc="props.html"
     :sandbox="PREVIEW_SANDBOX"
     referrerpolicy="no-referrer"
-    title="App preview"
+    :title="props.title ?? 'App preview'"
     class="size-full border-0 bg-white"
     @load="onLoad"
   />

@@ -29,6 +29,9 @@ export interface StartInput {
   model: string;
   effort: string;
   nowMs: number;
+  mode?: 'single' | 'variants';
+  /** Set when mode is variants. The run fills the rest in later. */
+  variantsSeed?: { reservedCents: number; baseSnapshotId: string | null };
 }
 export interface StartResult {
   project: ProjectRecord;
@@ -199,6 +202,26 @@ export class GenerationsRepo {
       const now = ts(i.nowMs);
       tx.create(genRef, {
         status: 'streaming',
+        mode: i.mode ?? 'single',
+        ...(i.mode === 'variants'
+          ? {
+              variants: {
+                count: 4,
+                baseSnapshotId: i.variantsSeed?.baseSnapshotId ?? null,
+                directionsVersion: 'directions.v1',
+                checklistPromptVersion: 'checklist.v1',
+                judgePromptVersion: 'judge.v1',
+                calendarCount: 0,
+                checklist: null,
+                ranking: null,
+                notice: null,
+                resolution: null,
+                selection: null,
+                cost: { candidatesCents: 0, checklistCents: 0, judgeCents: 0, totalCents: 0 },
+                reservedCents: i.variantsSeed?.reservedCents ?? 0,
+              },
+            }
+          : {}),
         prompt: i.prompt,
         promptVersion: i.promptVersion,
         model: i.model,

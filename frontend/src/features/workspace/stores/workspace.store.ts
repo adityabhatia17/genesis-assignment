@@ -22,6 +22,8 @@ export const useWorkspaceStore = defineStore('workspace', () => {
   const consoleOpen = ref(false);
   const historyOpen = ref(false);
   const mobileTab = ref<MobileTab>('chat');
+  /** Set when returning from a discarded variants run so the composer can restore the prompt. */
+  const seedPrompt = ref<string | null>(null);
   const followGeneration = useLocalStorage('genesis-follow-generation', true);
   const treeCollapsed = useLocalStorage('genesis-tree-collapsed', false);
 
@@ -37,6 +39,7 @@ export const useWorkspaceStore = defineStore('workspace', () => {
     consoleOpen.value = false;
     historyOpen.value = false;
     mobileTab.value = 'chat';
+    seedPrompt.value = null;
   }
 
   function openFile(path: string, activate = true): void {
@@ -79,6 +82,7 @@ export const useWorkspaceStore = defineStore('workspace', () => {
     consoleOpen,
     historyOpen,
     mobileTab,
+    seedPrompt,
     followGeneration,
     treeCollapsed,
     reset,

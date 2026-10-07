@@ -1,39 +1,26 @@
 import type { Request, Response } from 'express';
-import type { Issue, Usage } from '../../contracts/firestore-docs.js';
+import type { Usage } from '../../contracts/firestore-docs.js';
 import { LIMITS } from '../../contracts/limits.js';
-import { languageForPath } from '../../contracts/paths.js';
 import type { Clock } from '../../shared/clock.js';
-import { sha256Hex, utf8Bytes } from '../../shared/hash.js';
-import { serializeError, type Logger } from '../../shared/logger.js';
+import { serializeError } from '../../shared/logger.js';
+import { GenerationAbort } from './candidate/abort.js';
+import type { CandidateRunResult, CandidateRunner } from './candidate/candidate-runner.js';
+import type { CandidateSink } from './candidate/candidate-sink.js';
 import type { ContextBuilder } from './context/context-builder.js';
 import type { CurrentFile } from './context/render-context.js';
-import {
-  estimateCostUsd,
-  ProviderError,
-  type ModelProvider,
-  type ProviderResult,
-} from './llm/model-provider.js';
-import { decideOutcome, type Decision, type RejectedFile, type Termination } from './outcome.js';
+import { estimateCostUsd } from './llm/model-provider.js';
+import { decideOutcome, type Decision, type Termination } from './outcome.js';
 import type { CommitService } from './persistence/commit.service.js';
 import type { GenerationsRepo } from './persistence/generations.repo.js';
 import { PROMPT_VERSION } from './prompt/system-prompt.v1.js';
-import { FileStreamParser, type ParserEvent } from './protocol/file-stream-parser.js';
 import { SseWriter } from './sse/sse-writer.js';
-import { validateDelete, validateWrite, type FileOp } from './validation/validate-file.js';
 import type { Tree } from './validation/validate-project.js';
-
-class GenerationAbort extends Error {
-  constructor(readonly kind: 'cancelled' | 'disconnected' | 'timeout') {
-    super(kind);
-    this.name = 'GenerationAbort';
-  }
-}
 
 export interface OrchestratorDeps {
   generations: GenerationsRepo;
   commits: CommitService;
   context: ContextBuilder;
-  provider: ModelProvider;
+  runner: CandidateRunner;
   clock: Clock;
   deadlineMs?: number;
   heartbeatMs?: number;
@@ -44,26 +31,24 @@ export interface RunInput {
   projectId: string;
   generationId: string;
   prompt: string;
+  /** Set when a variants run fell back to one candidate. */
+  fallbackReason?:
+    | 'disabled'
+    | 'budget'
+    | 'user_limit'
+    | 'global_limit'
+    | 'busy'
+    | 'not_first';
 }
 
-/** Mutable per-run state. */
-class RunState {
-  prose = '';
-  raw = '';
-  firstTokenAtMs: number | null = null;
-  readonly ops = new Map<string, FileOp>();
-  readonly rejected: RejectedFile[] = [];
-  readonly aborted: RejectedFile[] = [];
-  readonly warnings: Issue[] = [];
-  readonly suppressed = new Set<string>();
-  currentTree: Tree | null = null;
-  currentFiles: Map<string, CurrentFile> | null = null;
+interface HeldContext {
+  currentTree: Tree | null;
   stats: {
     fileCount: number;
     historyMessages: number;
     externalIncluded: boolean;
     promptChars: number;
-  } | null = null;
+  } | null;
 }
 
 const toTree = (files: Map<string, CurrentFile>): Tree =>
@@ -91,14 +76,14 @@ export class GenerationOrchestrator {
 
   /** Throws AppError before the stream opens (→ JSON error); never throws after. */
   async run(req: Request, res: Response, i: RunInput): Promise<void> {
-    const { clock, provider, generations } = this.d;
+    const { clock, runner, generations } = this.d;
     const log = req.ctx.log.child({ projectId: i.projectId, generationId: i.generationId });
     const startedAt = clock.now();
     const { project, projectDescription } = await generations.start({
       ...i,
       promptVersion: PROMPT_VERSION,
-      model: provider.model,
-      effort: provider.effort,
+      model: runner.model,
+      effort: runner.effort,
       nowMs: startedAt,
     });
 
@@ -106,13 +91,16 @@ export class GenerationOrchestrator {
     sse.open();
     sse.send('generation.started', {
       projectId: i.projectId,
-      model: provider.model,
+      model: runner.model,
       promptVersion: PROMPT_VERSION,
       startedAt: new Date(startedAt).toISOString(),
+      mode: 'single',
+      ...(i.fallbackReason ? { fallbackReason: i.fallbackReason } : {}),
     });
     log.info('generation.start', { promptChars: i.prompt.length });
 
-    const state = new RunState();
+    const held: HeldContext = { currentTree: null, stats: null };
+    let produced: CandidateRunResult;
     const abort = new AbortController();
     let terminalSent = false;
     const stopWatch = generations.watchCancel(
@@ -139,9 +127,19 @@ export class GenerationOrchestrator {
       this.d.deadlineMs ?? LIMITS.generationDeadlineMs,
     );
 
-    let final: ProviderResult | null = null;
-    let termination: Termination = 'completed';
-    let providerErrorCode: ProviderError['code'] | undefined;
+    const sink: CandidateSink = {
+      onThinking: (text) => void sse.send('assistant.thinking', { text }),
+      onWritingStarted: () => void sse.send('generation.phase', { phase: 'writing' }),
+      onProse: (text) => void sse.send('assistant.delta', { text }),
+      onFileStarted: (path, language) => void sse.send('file.started', { path, language, op: 'write' }),
+      onFileDelta: (path, text) => void sse.send('file.delta', { path, text }),
+      stage: (op, warnings) =>
+        generations.stage(i.uid, i.projectId, i.generationId, op, warnings, clock.now()),
+      onFileCompleted: (ev) => void sse.send('file.completed', ev),
+      onFileDeleted: (ev) => void sse.send('file.deleted', ev),
+      afterChunk: () => sse.drain(),
+      onProtocolWarning: (code) => log.warn('generation.protocol_warning', { code }),
+    };
 
     try {
       sse.send('generation.phase', { phase: 'context' });
@@ -153,65 +151,56 @@ export class GenerationOrchestrator {
         generationId: i.generationId,
         prompt: i.prompt,
       });
-      state.currentFiles = ctx.currentFiles;
-      state.currentTree = toTree(ctx.currentFiles);
-      state.stats = ctx.stats;
-
+      held.currentTree = toTree(ctx.currentFiles);
+      held.stats = ctx.stats;
       sse.send('generation.phase', { phase: 'thinking' });
-      const stream = provider.stream({
-        system: ctx.system,
-        messages: ctx.messages,
-        signal: abort.signal,
-      });
-      const parser = new FileStreamParser();
-      let writing = false;
-      for await (const ev of stream) {
-        state.firstTokenAtMs ??= clock.now();
-        if (ev.type === 'thinking_delta') {
-          sse.send('assistant.thinking', { text: ev.text });
-          continue;
-        }
-        if (!writing) {
-          writing = true;
-          sse.send('generation.phase', { phase: 'writing' });
-        }
-        state.raw += ev.text;
-        for (const pe of parser.push(ev.text)) await this.onParserEvent(pe, sse, state, i, log);
-        await sse.drain();
-      }
-      for (const pe of parser.finish()) await this.onParserEvent(pe, sse, state, i, log);
-      final = await stream.final();
+      produced = await runner.run(
+        {
+          system: ctx.system,
+          messages: ctx.messages,
+          currentFiles: ctx.currentFiles,
+          currentTree: held.currentTree,
+          signal: abort.signal,
+        },
+        sink,
+        log,
+      );
     } catch (err) {
-      const reason: unknown = abort.signal.reason;
-      if (abort.signal.aborted && reason instanceof GenerationAbort) termination = reason.kind;
-      else if (err instanceof ProviderError) {
-        termination = 'provider_error';
-        providerErrorCode = err.code;
-      } else {
-        termination = 'provider_error';
-        providerErrorCode = 'INTERNAL';
-        log.error('generation.unexpected', { error: serializeError(err) });
-      }
+      log.error('generation.unexpected', { error: serializeError(err) });
+      produced = {
+        ops: [],
+        rejected: [],
+        aborted: [],
+        warnings: [],
+        prose: '',
+        raw: '',
+        final: null,
+        termination: 'provider_error',
+        providerErrorCode: 'INTERNAL',
+        firstTokenAtMs: null,
+      };
     }
 
+    const ran = produced;
+
     try {
-      if (termination === 'completed') sse.send('generation.phase', { phase: 'validating' });
+      if (ran.termination === 'completed') sse.send('generation.phase', { phase: 'validating' });
       const decision = decideOutcome({
-        termination,
-        providerErrorCode,
-        stopReason: final?.stopReason ?? null,
-        ops: [...state.ops.values()],
-        rejected: state.rejected,
-        aborted: state.aborted,
-        currentTree: state.currentTree,
+        termination: ran.termination,
+        ...(ran.providerErrorCode ? { providerErrorCode: ran.providerErrorCode } : {}),
+        stopReason: ran.final?.stopReason ?? null,
+        ops: ran.ops,
+        rejected: ran.rejected,
+        aborted: ran.aborted,
+        currentTree: held.currentTree,
       });
       terminalSent = true;
-      await this.finish(decision, sse, state, i, startedAt, final, termination, log);
+      await this.finish(decision, sse, ran, held, i, startedAt, ran.termination, log);
     } catch (err) {
       log.error('generation.finalize_failed', { error: serializeError(err) });
       if (!sse.isClosed) {
-        const partial = state.ops.size
-          ? { stagedPaths: [...state.ops.keys()].sort(), applyable: false }
+        const partial = ran.ops.length
+          ? { stagedPaths: ran.ops.filter((o) => o.op === 'write').map((o) => o.path).sort(), applyable: false }
           : null;
         sse.send('generation.failed', {
           error: {
@@ -228,7 +217,7 @@ export class GenerationOrchestrator {
       stopWatch();
       res.off('close', onClose);
       await generations
-        .saveRawArtifact(i.uid, i.projectId, i.generationId, state.raw, clock.now())
+        .saveRawArtifact(i.uid, i.projectId, i.generationId, ran.raw, clock.now())
         .catch((err: unknown) =>
           log.warn('generation.raw_save_failed', { error: serializeError(err) }),
         );
@@ -236,138 +225,37 @@ export class GenerationOrchestrator {
     }
   }
 
-  private async onParserEvent(
-    pe: ParserEvent,
-    sse: SseWriter,
-    s: RunState,
-    i: RunInput,
-    log: Logger,
-  ): Promise<void> {
-    switch (pe.type) {
-      case 'prose':
-        s.prose += pe.text;
-        sse.send('assistant.delta', { text: pe.text });
-        return;
-      case 'file_start': {
-        const language = languageForPath(pe.path);
-        if (!language) {
-          s.suppressed.add(pe.path);
-          return;
-        }
-        sse.send('file.started', { path: pe.path, language, op: 'write' });
-        return;
-      }
-      case 'file_chunk':
-        if (!s.suppressed.has(pe.path)) sse.send('file.delta', { path: pe.path, text: pe.text });
-        return;
-      case 'file_end': {
-        const v = validateWrite(pe.path, pe.content);
-        const warnings = v.issues.filter((x) => x.severity === 'warning');
-        if (v.op) {
-          s.ops.set(v.op.path, v.op);
-          s.warnings.push(...warnings);
-          await this.d.generations.stage(
-            i.uid,
-            i.projectId,
-            i.generationId,
-            v.op,
-            warnings,
-            this.d.clock.now(),
-          );
-        } else {
-          s.rejected.push({ path: pe.path, issues: v.issues });
-        }
-        sse.send('file.completed', {
-          path: pe.path,
-          status: v.op ? 'valid' : 'rejected',
-          sizeBytes: utf8Bytes(pe.content),
-          sha256: sha256Hex(pe.content),
-          issues: v.issues,
-        });
-        return;
-      }
-      case 'file_delete': {
-        const existing = new Set([...(s.currentFiles?.keys() ?? []), ...s.ops.keys()]);
-        const v = validateDelete(pe.path, existing);
-        if (v.op) {
-          s.ops.set(pe.path, v.op);
-          await this.d.generations.stage(
-            i.uid,
-            i.projectId,
-            i.generationId,
-            v.op,
-            [],
-            this.d.clock.now(),
-          );
-        } else if (!v.ok) {
-          s.rejected.push({ path: pe.path, issues: v.issues });
-        } else {
-          s.warnings.push(...v.issues);
-        }
-        sse.send('file.deleted', {
-          path: pe.path,
-          status: v.ok ? 'valid' : 'rejected',
-          issues: v.issues,
-        });
-        return;
-      }
-      case 'file_abort': {
-        const issues: Issue[] = [
-          {
-            code: 'FILE_UNTERMINATED',
-            severity: 'error',
-            message: 'The file was cut off before it finished.',
-            path: pe.path,
-          },
-        ];
-        s.aborted.push({ path: pe.path, issues });
-        if (!s.suppressed.has(pe.path)) {
-          sse.send('file.completed', {
-            path: pe.path,
-            status: 'rejected',
-            sizeBytes: utf8Bytes(pe.content),
-            sha256: sha256Hex(pe.content),
-            issues,
-          });
-        }
-        return;
-      }
-      case 'protocol_warning':
-        log.warn('generation.protocol_warning', { code: pe.code });
-        return;
-    }
-  }
-
   private async finish(
     decision: Decision,
     sse: SseWriter,
-    s: RunState,
+    ran: CandidateRunResult,
+    held: HeldContext,
     i: RunInput,
     startedAt: number,
-    final: ProviderResult | null,
     termination: Termination,
-    log: Logger,
+    log: ReturnType<Request['ctx']['log']['child']>,
   ): Promise<void> {
+    const final = ran.final;
     const now = this.d.clock.now();
     const usage: Usage | null = final
       ? { ...final.usage, costUsd: estimateCostUsd(final.model, final.usage) }
       : null;
     const timings = {
-      ttftMs: s.firstTokenAtMs ? s.firstTokenAtMs - startedAt : null,
+      ttftMs: ran.firstTokenAtMs ? ran.firstTokenAtMs - startedAt : null,
       totalMs: now - startedAt,
     };
-    const rejected = [...s.rejected, ...s.aborted];
+    const rejected = [...ran.rejected, ...ran.aborted];
 
     if (decision.kind === 'commit') {
       sse.send('generation.phase', { phase: 'committing' });
       const assistantText =
-        s.prose.trim() ||
-        (s.ops.size ? `Updated ${s.ops.size} file(s).` : 'No file changes were needed.');
+        ran.prose.trim() ||
+        (ran.ops.length ? `Updated ${ran.ops.length} file(s).` : 'No file changes were needed.');
       const result = await this.d.commits.applyTreeChange({
         uid: i.uid,
         projectId: i.projectId,
         nowMs: now,
-        ops: [...s.ops.values()],
+        ops: ran.ops,
         source: 'ai',
         validateNextTree: true,
         snapshot: {
@@ -395,14 +283,14 @@ export class GenerationOrchestrator {
             partial: null,
             usage,
             timings,
-            ...(s.stats ? { context: s.stats } : {}),
+            ...(held.stats ? { context: held.stats } : {}),
             result: {
               snapshotId: r.snapshotId,
               snapshotSeq: r.snapshotSeq,
               changedPaths: r.changedPaths,
               deletedPaths: r.deletedPaths,
               rejected,
-              warnings: [...s.warnings, ...decision.warnings],
+              warnings: [...ran.warnings, ...decision.warnings],
               noChanges: r.noChanges,
             },
           }),
@@ -414,7 +302,7 @@ export class GenerationOrchestrator {
         changedPaths: result.changedPaths,
         deletedPaths: result.deletedPaths,
         rejected,
-        warnings: [...s.warnings, ...decision.warnings],
+        warnings: [...ran.warnings, ...decision.warnings],
         noChanges: result.noChanges,
         usage: usage ?? {
           inputTokens: 0,
@@ -450,8 +338,8 @@ export class GenerationOrchestrator {
       stopReason: final?.stopReason ?? null,
       usage,
       timings,
-      context: s.stats,
-      assistantText: `${s.prose.trim()}\n\n${statusNote}`.trim(),
+      context: held.stats,
+      assistantText: `${ran.prose.trim()}\n\n${statusNote}`.trim(),
     });
     log.info('generation.end', {
       status: decision.status,

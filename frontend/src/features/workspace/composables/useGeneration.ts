@@ -5,6 +5,7 @@ import { onBeforeRouteLeave } from "vue-router";
 import { confirmAction } from "@/composables/useConfirm";
 import { fetchLatestGeneration } from "@/services/firestore/generations.repo";
 import { isActive } from "../stores/generation.reducer";
+import { useVariantsStore } from "@/features/variants/stores/variants.store";
 import { useGenerationStore } from "../stores/generation.store";
 import { useWorkspaceStore } from "../stores/workspace.store";
 import { useWorkspace } from "../workspace-context";
@@ -21,13 +22,23 @@ export function useGeneration(): void {
   store.bindProject(ws.uid, ws.projectId);
 
   // Page load: a still-running generation, or one that stopped with applyable files.
-  fetchLatestGeneration(ws.uid, ws.projectId)
-    .then((latest) => {
-      if (latest) store.hydrate(latest);
-    })
-    .catch((error: unknown) =>
-      console.warn("[generation] could not read the latest generation", error),
-    );
+  let hydrated = false;
+  watch(
+    () => ws.project.value,
+    (project) => {
+      if (!project || hydrated) return;
+      hydrated = true;
+      fetchLatestGeneration(ws.uid, ws.projectId)
+        .then((latest) => {
+          if (latest)
+            store.hydrate(latest, { latestSnapshotId: project.latestSnapshotId ?? null });
+        })
+        .catch((error: unknown) =>
+          console.warn("[generation] could not read the latest generation", error),
+        );
+    },
+    { immediate: true },
+  );
 
   // Another tab (or session) starts generating while this one is open.
   watch(
@@ -57,10 +68,12 @@ export function useGeneration(): void {
       if (!ok) return false;
     }
     if (isActive(state.value.status) && state.value.origin === "local") {
+      const buildingOptions = state.value.mode === "variants";
       return confirmAction({
-        title: "Leave while generating?",
-        description:
-          "The generation continues on the server. If the connection drops, finished files can be applied when you come back.",
+        title: buildingOptions ? "Leave while building options?" : "Leave while generating?",
+        description: buildingOptions
+          ? "Leaving now stops this build. You would need to start again."
+          : "The generation continues on the server. If the connection drops, finished files can be applied when you come back.",
         confirmLabel: "Leave",
         destructive: true,
       });
@@ -77,5 +90,8 @@ export function useGeneration(): void {
     }
   });
 
-  onBeforeUnmount(() => store.teardown());
+  onBeforeUnmount(() => {
+    useVariantsStore().release();
+    store.teardown();
+  });
 }

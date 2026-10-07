@@ -9,3 +9,4 @@ export * from './hl-runtime.js';
 export * from './api.js';
 export * from './sse.js';
 export * from './bridge.js';
+export * from './variants.js';

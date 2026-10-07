@@ -69,8 +69,8 @@ export const hlWebhook = onRequest(
 export const generate = onRequest(
   {
     timeoutSeconds: 540,
-    memory: '1GiB',
-    concurrency: 20,
+    memory: '2GiB',
+    concurrency: 10,
     maxInstances: 5,
     minInstances: GENERATE_MIN_INSTANCES,
     invoker: 'public',

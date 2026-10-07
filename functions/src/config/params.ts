@@ -38,5 +38,19 @@ export const GENERATION_ENABLED = defineString('GENERATION_ENABLED', { default: 
 export const GENERATION_DAILY_GLOBAL_CAP = defineInt('GENERATION_DAILY_GLOBAL_CAP', {
   default: 200,
 });
+export const VARIANTS_ENABLED = defineString('VARIANTS_ENABLED', { default: 'false' });
+export const VARIANTS_COUNT = defineInt('VARIANTS_COUNT', { default: 4 });
+export const VARIANTS_USER_PER_10MIN = defineInt('VARIANTS_USER_PER_10MIN', { default: 2 });
+export const VARIANTS_USER_PER_DAY = defineInt('VARIANTS_USER_PER_DAY', { default: 3 });
+export const VARIANTS_GLOBAL_PER_DAY = defineInt('VARIANTS_GLOBAL_PER_DAY', { default: 10 });
+/** $10.00 → 1000. Integer cents avoid float drift in the counter. */
+export const VARIANTS_DAILY_BUDGET_CENTS = defineInt('VARIANTS_DAILY_BUDGET_CENTS', {
+  default: 1000,
+});
+export const VARIANTS_CHECKLIST_MODEL = defineString('VARIANTS_CHECKLIST_MODEL', {
+  default: 'claude-haiku-4-5',
+});
+/** Empty until set. It must differ from ANTHROPIC_MODEL. */
+export const VARIANTS_JUDGE_MODEL = defineString('VARIANTS_JUDGE_MODEL', { default: '' });
 export const API_MIN_INSTANCES = defineInt('API_MIN_INSTANCES', { default: 0 });
 export const GENERATE_MIN_INSTANCES = defineInt('GENERATE_MIN_INSTANCES', { default: 0 });

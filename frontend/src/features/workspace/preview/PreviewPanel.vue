@@ -1,38 +1,36 @@
 <script setup lang="ts">
 import { PlugIcon } from '@lucide/vue';
-import { refDebounced, useEventListener } from '@vueuse/core';
+import { useEventListener, useMediaQuery } from '@vueuse/core';
 import { storeToRefs } from 'pinia';
-import { computed, onBeforeUnmount, ref, shallowRef, watch } from 'vue';
+import { computed, ref, watch } from 'vue';
 import PageState from '@/components/common/PageState.vue';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import type { PreviewContext } from '@/contracts/bridge';
+import OptionToggle from '@/features/variants/OptionToggle.vue';
+import { useVariantsStore } from '@/features/variants/stores/variants.store';
 import { useHighLevelConnection } from '@/features/highlevel/useHighLevelConnection';
-import { newNonce } from '@/lib/ids';
-import { invokeRuntime } from '@/services/api/hl-runtime.api';
 import { usePreviewEvents } from '../composables/usePreviewEvents';
+import { useGenerationStore } from '../stores/generation.store';
 import { useWorkspaceStore } from '../stores/workspace.store';
 import { useWorkspace } from '../workspace-context';
-import { compilePreview } from './compile-preview';
-import { PreviewHostBridge, type BridgeCall, type BridgeLog } from './host-bridge';
+import type { PreviewFile } from './compile-preview';
 import PreviewConsole from './PreviewConsole.vue';
 import PreviewFrame from './PreviewFrame.vue';
 import PreviewToolbar from './PreviewToolbar.vue';
-import runtimeSource from './runtime/genesis-runtime.js?raw';
-
-const MAX_LOGS = 500;
-const MAX_CALLS = 200;
+import { useSandboxPreview } from './useSandboxPreview';
 
 const ws = useWorkspace();
 const workspace = useWorkspaceStore();
+const generation = useGenerationStore();
+const variants = useVariantsStore();
 const { previewNonce, consoleOpen } = storeToRefs(workspace);
+const { state: generationState } = storeToRefs(generation);
+const { options, selectedId, pendingId, selecting, confirmation } = storeToRefs(variants);
 const hl = useHighLevelConnection();
+const wide = useMediaQuery('(min-width: 1024px)');
 
 const expanded = ref(false);
-const logs = shallowRef<BridgeLog[]>([]);
-const calls = shallowRef<BridgeCall[]>([]);
-const errorCount = computed(() => logs.value.filter((l) => l.level === 'error').length);
-const frameElement = shallowRef<HTMLIFrameElement | null>(null);
 
 function context(): PreviewContext {
   const project = ws.project.value;
@@ -50,48 +48,55 @@ function context(): PreviewContext {
   };
 }
 
-let flushEvents = (): void => undefined;
-const bridge = new PreviewHostBridge({
-  getContext: context,
-  invoke: (method, params, signal) => invokeRuntime(ws.projectId, method, params, signal),
-  onLog: (entry) => (logs.value = [...logs.value, entry].slice(-MAX_LOGS)),
-  onCall: (call) => (calls.value = [...calls.value, call].slice(-MAX_CALLS)),
-  onPort: () => flushEvents(),
+const choosing = computed(
+  () =>
+    generationState.value.mode === 'variants' &&
+    generationState.value.status === 'awaiting_selection',
+);
+const buildingOptions = computed(
+  () =>
+    generationState.value.mode === 'variants' &&
+    ['submitting', 'streaming', 'reconciling', 'cancelling'].includes(generationState.value.status),
+);
+const selected = computed(
+  () => options.value.find((option) => option.entry.candidateId === selectedId.value) ?? null,
+);
+const previewFiles = computed((): PreviewFile[] => {
+  if (choosing.value) return selected.value?.files ?? [];
+  const seq = ws.project.value?.snapshotSeq ?? 0;
+  if (confirmation.value?.files && seq === 0) return confirmation.value.files;
+  return ws.files.value;
 });
-flushEvents = usePreviewEvents(bridge);
-
-// Only committed files feed the preview: it rebuilds after a generation commit, a save or a
-// restore — never while tokens stream or from unsaved buffers (R-FE5).
 const fingerprint = computed(() =>
-  ws.files.value
-    .map((f) => `${f.path}:${f.contentHash}`)
+  previewFiles.value
+    .map((file) => {
+      const hash =
+        'contentHash' in file ? String((file as { contentHash?: string }).contentHash ?? '') : '';
+      return `${file.path}:${hash || file.content.length}`;
+    })
     .sort()
     .join('|'),
 );
-const settled = refDebounced(fingerprint, 150);
-const nonce = ref(newNonce());
-const rebuilding = computed(() => settled.value !== fingerprint.value);
-
-watch([settled, previewNonce], () => {
-  nonce.value = newNonce();
+let relay = (): void => undefined;
+const preview = useSandboxPreview({
+  files: previewFiles,
+  projectId: ws.projectId,
+  context,
+  revision: fingerprint,
+  debounceMs: 150,
+  onPort: () => relay(),
 });
+relay = usePreviewEvents(preview.bridge);
+const { compiled, nonce, rebuilding, logs, calls, errorCount, frameElement } = preview;
 
-const compiled = computed(() =>
-  compilePreview({ files: ws.files.value, runtimeSource, nonce: nonce.value }),
-);
-
-watch(
-  nonce,
-  (value) => {
-    logs.value = [];
-    bridge.attach(() => frameElement.value, value);
-  },
-  { immediate: true },
-);
-onBeforeUnmount(() => bridge.detach());
+watch(previewNonce, () => preview.reload());
 
 const snapshotSeq = computed(() => ws.project.value?.snapshotSeq ?? 0);
 const label = computed(() => {
+  if (choosing.value && selected.value) {
+    return `Option ${selected.value.entry.rank} of ${options.value.length} · preview only`;
+  }
+  if (buildingOptions.value) return 'Building your options';
   if (rebuilding.value) return 'Rebuilding…';
   if (!compiled.value.html) return 'Waiting for the first generation';
   const edits = ws.project.value?.workingTreeDirty ? ' + saved edits' : '';
@@ -105,6 +110,16 @@ const mismatch = computed(() => {
     projectLocation !== hl.locationId.value
   );
 });
+
+const toggleOptions = computed(() =>
+  options.value.map((option) => ({
+    candidateId: option.entry.candidateId,
+    rank: option.entry.rank,
+    total: option.entry.total,
+    topPick: option.entry.topPick,
+  })),
+);
+const toggleLocked = computed(() => pendingId.value !== null || selecting.value !== null);
 
 function toggleExpanded(): void {
   if (!expanded.value && !compiled.value.html) return;
@@ -171,6 +186,14 @@ function onNavigated(): void {
         </ul>
       </AlertDescription>
     </Alert>
+    <OptionToggle
+      v-if="!wide && choosing && toggleOptions.length > 0"
+      class="m-2"
+      :options="toggleOptions"
+      :selected-id="selectedId"
+      :locked="toggleLocked"
+      @select="variants.choose"
+    />
     <div class="relative min-h-0 flex-1 bg-muted/30">
       <PreviewFrame
         v-if="compiled.html"
@@ -179,6 +202,20 @@ function onNavigated(): void {
         @ready="frameElement = $event"
         @navigated="onNavigated"
       />
+      <PageState
+        v-else-if="buildingOptions"
+        kind="empty"
+        title="Building your options"
+        description="They will show here when they are ready."
+      />
+      <PageState
+        v-else-if="choosing && selected?.state === 'error'"
+        kind="error"
+        title="Couldn't load this version"
+        action-label="Retry"
+        @action="selected && variants.retryOption(selected.entry.candidateId)"
+      />
+      <PageState v-else-if="choosing" kind="loading" title="Loading this version" />
       <PageState
         v-else-if="!ws.filesLoading.value"
         kind="empty"
@@ -191,10 +228,7 @@ function onNavigated(): void {
       v-if="consoleOpen"
       :logs="logs"
       :calls="calls"
-      @clear="
-        logs = [];
-        calls = [];
-      "
+      @clear="preview.clearConsole()"
       @close="consoleOpen = false"
     />
   </section>

@@ -9,7 +9,7 @@ import { Switch } from '@/components/ui/switch';
 import { confirmAction } from '@/composables/useConfirm';
 import { useTheme } from '@/composables/useTheme';
 import { useFileSave } from '../composables/useFileSave';
-import { isActive } from '../stores/generation.reducer';
+import { isActive, isAwaitingSelection } from '../stores/generation.reducer';
 import { useGenerationStore } from '../stores/generation.store';
 import { useWorkspaceStore } from '../stores/workspace.store';
 import { useWorkspace } from '../workspace-context';
@@ -35,6 +35,9 @@ const { resolved } = useTheme();
 const saver = useFileSave();
 
 const readOnly = computed(() => isActive(state.value.status));
+const choosing = computed(
+  () => state.value.mode === 'variants' && isAwaitingSelection(state.value.status),
+);
 const committed = computed(() => new Map(ws.files.value.map((f) => [f.path, f])));
 const uncommitted = computed(() =>
   Object.values(state.value.files)
@@ -88,7 +91,14 @@ function keepMine(path: string): void {
 </script>
 
 <template>
-  <section class="flex h-full min-h-0" aria-label="Code">
+  <section v-if="choosing" class="flex h-full min-h-0 flex-col" aria-label="Code">
+    <PageState
+      kind="empty"
+      title="Code appears once you pick a version."
+      description="The preview shows the version selected in the chat."
+    />
+  </section>
+  <section v-else class="flex h-full min-h-0" aria-label="Code">
     <aside v-if="!treeCollapsed" class="w-52 shrink-0 border-r">
       <FileTree
         :paths="treePaths"

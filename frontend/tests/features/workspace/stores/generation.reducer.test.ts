@@ -1,5 +1,8 @@
 import {
   initialGenerationState,
+  isActive,
+  isAwaitingSelection,
+  isTerminal,
   reduceGeneration,
   type GenerationAction,
   type GenerationState,
@@ -109,6 +112,55 @@ describe('generation reducer', () => {
       partial: null,
       result: { snapshotSeq: 9 },
     });
+  });
+
+  it('tracks a variants run until the options are ready', () => {
+    const top = [
+      {
+        candidateId: 'c0' as const,
+        rank: 1,
+        topPick: true,
+        total: 80,
+        groups: {
+          works: { points: 30, max: 35 },
+          looks: { points: 24, max: 30 },
+          request: { points: 12, max: 15 },
+          easy: { points: 8, max: 10 },
+        },
+        direction: { id: 'agenda', label: 'Agenda by day' },
+      },
+    ];
+    const s = run([
+      submit,
+      ...feed(
+        events('g1', [
+          {
+            type: 'generation.started',
+            data: {
+              projectId: 'p1',
+              model: 'm',
+              promptVersion: 'v1',
+              startedAt: '2026-10-07T00:00:00Z',
+              mode: 'variants',
+            },
+          },
+          { type: 'variants.phase', data: { phase: 'generating' } },
+          { type: 'candidate.progress', data: { candidateId: 'c0', stage: 'done' } },
+          {
+            type: 'variants.ready',
+            data: { top, notice: null, usage: { inputTokens: 1, outputTokens: 1, cacheReadInputTokens: 0, cacheCreationInputTokens: 0 }, durationMs: 10 },
+          },
+        ]),
+      ),
+    ]);
+    expect(s.status).toBe('awaiting_selection');
+    expect(s.mode).toBe('variants');
+    expect(s.variants?.top).toEqual(top);
+    expect(s.variants?.candidates.c0).toBe('done');
+    expect(isAwaitingSelection(s.status)).toBe(true);
+    expect(isActive(s.status)).toBe(false);
+    expect(isTerminal(s.status)).toBe(false);
+    expect(phaseLabel(s)).toBe('Choose a version');
   });
 
   it('labels each phase in plain words', () => {

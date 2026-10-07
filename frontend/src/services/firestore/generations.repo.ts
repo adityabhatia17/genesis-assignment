@@ -29,6 +29,15 @@ export function toGenerationSnapshot(g: Generation): GenerationSnapshot {
         }
       : null,
     heartbeatAtMs: toMillis(g.heartbeatAt),
+    mode: g.mode ?? 'single',
+    variants: g.variants
+      ? {
+          resolution: g.variants.resolution,
+          baseSnapshotId: g.variants.baseSnapshotId,
+          notice: g.variants.notice,
+          top: g.variants.ranking?.top ?? null,
+        }
+      : null,
   };
 }
 

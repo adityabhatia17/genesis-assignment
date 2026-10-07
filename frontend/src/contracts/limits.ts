@@ -28,4 +28,35 @@ export const LIMITS = {
   bridgeWritesPerMinute: 10,
   bridgeCallTimeoutMs: 20_000,
   bridgeMaxParamsBytes: 65_536,
+  variants: {
+    count: 4,
+    /** Candidate 0 starts first and writes the prompt cache; the others wait this long. */
+    staggerMs: 1_500,
+    checklistTimeoutMs: 20_000,
+    /** All candidates (including retries) must finish generating by this elapsed time. */
+    generationPhaseDeadlineMs: 300_000,
+    attemptDeadlineMs: 180_000,
+    /** A retry may only start while the run has used less than this. */
+    retryStartLatestMs: 150_000,
+    scoringTimeoutMs: 45_000,
+    judgeTimeoutMs: 60_000,
+    /** Hard stop for the whole run; the function timeout is 540 s. */
+    runHardDeadlineMs: 480_000,
+    scoringConcurrency: 2,
+    scenarioTimeoutMs: 8_000,
+    sandboxMemoryMb: 256,
+    judgeSourceBudgetBytes: 30_000,
+    minShownScore: 25,
+    tieMargin: 3,
+    judgeDisagreementMax: 15,
+    candidateTtlDays: 7,
+    /** Reserved against the daily budget at admission, then settled with the real cost. */
+    runReserveCents: 250,
+    maxConcurrentRunsPerInstance: 2,
+    maxConcurrentLlmStreams: 12,
+    checklistItemsMax: 8,
+    checklistNiceMax: 2,
+    checklistMergedMin: 3,
+    checklistMergedMax: 12,
+  },
 } as const;

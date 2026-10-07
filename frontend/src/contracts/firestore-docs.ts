@@ -5,6 +5,7 @@ import { z } from 'zod';
 import type { ErrorCode } from './errors.js';
 import type { RuntimeEventName } from './hl-runtime.js';
 import type { FileLanguage } from './paths.js';
+import type { CandidateScore, Checklist, VariantsRanking } from './variants.js';
 
 export const IssueSchema = z.object({
   code: z.string().min(1),
@@ -33,6 +34,7 @@ export type PartialResult = z.infer<typeof PartialResultSchema>;
 
 export const GENERATION_STATUSES = [
   'streaming',
+  'awaiting_selection',
   'completed',
   'failed',
   'interrupted',
@@ -46,6 +48,65 @@ export const TERMINAL_GENERATION_STATUSES = [
   'cancelled',
 ] as const;
 export type TerminalGenerationStatus = (typeof TERMINAL_GENERATION_STATUSES)[number];
+
+export type GenerationMode = 'single' | 'variants';
+
+export interface VariantsRunState<T> {
+  count: number;
+  /** Latest snapshot when the run started. Selection requires it to be unchanged. */
+  baseSnapshotId: string | null;
+  directionsVersion: string;
+  checklistPromptVersion: string;
+  judgePromptVersion: string;
+  calendarCount: number;
+  checklist: Checklist | null;
+  ranking: VariantsRanking | null;
+  notice: 'only_one_option' | 'unjudged' | null;
+  resolution: 'selected' | 'discarded' | null;
+  selection: {
+    candidateId: string;
+    rank: number;
+    topPickWasSelected: boolean;
+    scores: Record<string, number>;
+    selectedAt: T;
+  } | null;
+  cost: {
+    candidatesCents: number;
+    checklistCents: number;
+    judgeCents: number;
+    totalCents: number;
+  };
+  reservedCents: number;
+}
+
+export const CANDIDATE_STATUSES = [
+  'pending',
+  'generating',
+  'retrying',
+  'generated',
+  'scoring',
+  'scored',
+  'disqualified',
+  'failed',
+] as const;
+export type CandidateStatus = (typeof CANDIDATE_STATUSES)[number];
+
+export interface CandidateDoc<T> {
+  index: number;
+  direction: { id: string; label: string };
+  status: CandidateStatus;
+  attempts: number;
+  startedAt: T | null;
+  completedAt: T | null;
+  stopReason: string | null;
+  error: GenerationError | null;
+  usage: Usage | null;
+  fileCount: number;
+  totalBytes: number;
+  warnings: Issue[];
+  score: CandidateScore | null;
+  expireAt: T;
+}
 
 export type SnapshotKind = 'generation' | 'checkpoint' | 'restore';
 export type FileSource = 'ai' | 'manual' | 'restore';
@@ -142,6 +203,9 @@ export interface GenerationPartial<T> extends PartialResult {
 
 export interface GenerationDoc<T> {
   status: GenerationStatus;
+  /** Absent on documents written before variants. Treat as `single`. */
+  mode?: GenerationMode;
+  variants?: VariantsRunState<T> | null;
   prompt: string;
   promptVersion: string;
   model: string;

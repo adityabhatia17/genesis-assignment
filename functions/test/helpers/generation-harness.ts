@@ -6,6 +6,7 @@ import { createHttpApp } from '../../src/http/create-http-app.js';
 import { ContextBuilder } from '../../src/modules/generation/context/context-builder.js';
 import { generationRouter } from '../../src/modules/generation/generate.app.js';
 import { MemoryRateLimiter } from '../../src/modules/rate-limit/rate-limiter.js';
+import { CandidateRunner } from '../../src/modules/generation/candidate/candidate-runner.js';
 import { FakeProvider } from '../../src/modules/generation/llm/fake.provider.js';
 import { GenerationOrchestrator } from '../../src/modules/generation/orchestrator.js';
 import { CommitService } from '../../src/modules/generation/persistence/commit.service.js';
@@ -55,11 +56,12 @@ export function makeApps(opts: { deadlineMs?: number; chunkDelayMs?: number } = 
         note: 'HighLevel is not connected yet.',
       }),
   };
+  const provider = new FakeProvider({ chunkDelayMs: opts.chunkDelayMs ?? 0 });
   const orchestrator = new GenerationOrchestrator({
     generations,
     commits,
     context: new ContextBuilder(db, locationContext),
-    provider: new FakeProvider({ chunkDelayMs: opts.chunkDelayMs ?? 0 }),
+    runner: new CandidateRunner(provider, systemClock, fakeLogger()),
     clock: systemClock,
     deadlineMs: opts.deadlineMs,
     heartbeatMs: 1_000,
