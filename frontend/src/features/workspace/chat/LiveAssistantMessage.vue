@@ -3,6 +3,7 @@ import { computed } from "vue";
 import { Spinner } from "@/components/ui/spinner";
 import { phaseLabel } from "../stores/generation.labels";
 import type { GenerationState } from "../stores/generation.reducer";
+import FallbackNotice from "@/features/variants/FallbackNotice.vue";
 import FileOpChips from "./FileOpChips.vue";
 import ThinkingDisclosure from "./ThinkingDisclosure.vue";
 
@@ -19,6 +20,10 @@ const streaming = computed(() => props.state.status === "streaming");
 <template>
   <div class="px-1" data-testid="live-message">
     <p class="mb-1 text-[11px] font-medium text-muted-foreground">Genesis</p>
+    <FallbackNotice
+      v-if="props.state.mode === 'single'"
+      :reason="props.state.fallbackReason"
+    />
     <p
       v-if="label"
       class="mb-2 flex items-center gap-2 text-xs text-muted-foreground"

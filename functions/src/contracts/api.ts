@@ -1,5 +1,7 @@
 import { z } from 'zod';
 import { LIMITS } from './limits.js';
+import { ErrorCodeSchema } from './errors.js';
+import { RankedEntrySchema } from './variants.js';
 
 export const DocId = z
   .string()
@@ -77,6 +79,39 @@ export type ApplyResult = z.infer<typeof ApplyResult>;
 export const DiscardResult = z.object({ discarded: z.literal(true) });
 export const CancelResult = z.object({ cancelled: z.literal(true) });
 export type CancelResult = z.infer<typeof CancelResult>;
+
+export const VariantsParams = GenerationParams;
+export const SelectCandidateBody = z.strictObject({
+  candidateId: z.string().regex(/^c[0-9]$/),
+});
+export type SelectCandidateBody = z.infer<typeof SelectCandidateBody>;
+export const SelectCandidateResult = z.object({
+  snapshotId: z.string(),
+  snapshotSeq: z.number().int(),
+  candidateId: z.string(),
+  appliedPaths: z.array(z.string()),
+});
+export type SelectCandidateResult = z.infer<typeof SelectCandidateResult>;
+
+export const VariantsResultDto = z.object({
+  generationId: z.string(),
+  status: z.enum([
+    'streaming',
+    'awaiting_selection',
+    'completed',
+    'failed',
+    'interrupted',
+    'cancelled',
+  ]),
+  resolution: z.enum(['selected', 'discarded']).nullable(),
+  selectedCandidateId: z.string().nullable(),
+  top: z.array(RankedEntrySchema),
+  notice: z.enum(['only_one_option', 'unjudged']).nullable(),
+  error: z
+    .object({ code: ErrorCodeSchema, message: z.string(), retryable: z.boolean() })
+    .nullable(),
+});
+export type VariantsResultDto = z.infer<typeof VariantsResultDto>;
 
 export const HealthResult = z.object({
   ok: z.literal(true),

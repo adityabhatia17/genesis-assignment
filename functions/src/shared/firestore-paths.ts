@@ -23,4 +23,11 @@ export const paths = {
   connections: () => 'hlConnections',
   oauthState: (hash: string) => `oauthStates/${hash}`,
   rateLimit: (id: string) => `rateLimits/${id}`,
+  budgetDay: (key: string) => `rateLimits/variantsBudget_${key}`,
+  candidates: (uid: string, pid: string, gid: string) =>
+    `${project(uid, pid)}/generations/${gid}/candidates`,
+  candidate: (uid: string, pid: string, gid: string, cid: string) =>
+    `${project(uid, pid)}/generations/${gid}/candidates/${cid}`,
+  candidateStaged: (uid: string, pid: string, gid: string, cid: string) =>
+    `${project(uid, pid)}/generations/${gid}/candidates/${cid}/staged`,
 } as const;

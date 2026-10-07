@@ -19,8 +19,23 @@ export interface WindowState {
   readonly count: number;
 }
 
+export interface ConsumeRequest {
+  readonly rule: RateLimitRule;
+  readonly subject: string;
+}
+
+export interface ConsumeAllResult {
+  readonly allowed: boolean;
+  readonly deniedRule: string | null;
+  readonly retryAfterMs: number;
+}
+
 export interface RateLimiter {
   consume(rule: RateLimitRule, subject: string): Promise<ConsumeResult>;
+  /** All-or-nothing: either every rule is consumed or none is. */
+  consumeAll(requests: readonly ConsumeRequest[]): Promise<ConsumeAllResult>;
+  /** Gives one unit back if the window that was charged is still open. */
+  refund(request: ConsumeRequest): Promise<void>;
 }
 
 const MINUTE = 60_000;
@@ -70,6 +85,16 @@ export function nextWindow(
   return { allowed: true, retryAfterMs: 0, next: { windowStartMs, count: count + 1 } };
 }
 
+/** Returns the next state, or null when there is nothing to refund. */
+export function refundWindow(
+  state: WindowState | null,
+  now: number,
+  rule: RateLimitRule,
+): WindowState | null {
+  if (!state || now >= state.windowStartMs + rule.windowMs || state.count <= 0) return null;
+  return { windowStartMs: state.windowStartMs, count: state.count - 1 };
+}
+
 function field(data: object, key: 'windowStartMs' | 'count'): unknown {
   if (!Object.hasOwn(data, key)) return undefined;
   return (data as Record<string, unknown>)[key];
@@ -95,6 +120,31 @@ export class MemoryRateLimiter implements RateLimiter {
     if (decision.allowed) this.buckets.set(key, decision.next);
     return Promise.resolve({ allowed: decision.allowed, retryAfterMs: decision.retryAfterMs });
   }
+
+  consumeAll(requests: readonly ConsumeRequest[]): Promise<ConsumeAllResult> {
+    const now = this.clock.now();
+    const decisions = requests.map((r) =>
+      nextWindow(this.buckets.get(rateLimitKey(r.subject, r.rule.name)) ?? null, now, r.rule),
+    );
+    const denied = decisions.findIndex((d) => !d.allowed);
+    if (denied >= 0) {
+      return Promise.resolve({
+        allowed: false,
+        deniedRule: requests[denied]!.rule.name,
+        retryAfterMs: decisions[denied]!.retryAfterMs,
+      });
+    }
+    requests.forEach((r, i) => this.buckets.set(rateLimitKey(r.subject, r.rule.name), decisions[i]!.next));
+    return Promise.resolve({ allowed: true, deniedRule: null, retryAfterMs: 0 });
+  }
+
+  refund(request: ConsumeRequest): Promise<void> {
+    const key = rateLimitKey(request.subject, request.rule.name);
+    const next = refundWindow(this.buckets.get(key) ?? null, this.clock.now(), request.rule);
+    if (next) this.buckets.set(key, next);
+    else if ((this.buckets.get(key)?.count ?? 0) <= 0) this.buckets.delete(key);
+    return Promise.resolve();
+  }
 }
 
 export class FirestoreRateLimiter implements RateLimiter {
@@ -114,6 +164,43 @@ export class FirestoreRateLimiter implements RateLimiter {
       );
       if (decision.allowed) tx.set(ref, { ...decision.next });
       return { allowed: decision.allowed, retryAfterMs: decision.retryAfterMs };
+    });
+  }
+
+  consumeAll(requests: readonly ConsumeRequest[]): Promise<ConsumeAllResult> {
+    if (requests.length === 0) return Promise.resolve({ allowed: true, deniedRule: null, retryAfterMs: 0 });
+    const refs = requests.map((r) =>
+      this.db.doc(paths.rateLimit(rateLimitKey(r.subject, r.rule.name))),
+    );
+    return this.db.runTransaction(async (tx) => {
+      const snaps = await tx.getAll(...refs);
+      const now = this.clock.now();
+      const decisions = requests.map((r, i) =>
+        nextWindow(snaps[i]?.exists ? readWindowState(snaps[i]?.data()) : null, now, r.rule),
+      );
+      const denied = decisions.findIndex((d) => !d.allowed);
+      if (denied >= 0) {
+        return {
+          allowed: false,
+          deniedRule: requests[denied]!.rule.name,
+          retryAfterMs: decisions[denied]!.retryAfterMs,
+        };
+      }
+      decisions.forEach((d, i) => tx.set(refs[i]!, { ...d.next }));
+      return { allowed: true, deniedRule: null, retryAfterMs: 0 };
+    });
+  }
+
+  refund(request: ConsumeRequest): Promise<void> {
+    const ref = this.db.doc(paths.rateLimit(rateLimitKey(request.subject, request.rule.name)));
+    return this.db.runTransaction(async (tx) => {
+      const snap = await tx.get(ref);
+      const next = refundWindow(
+        snap.exists ? readWindowState(snap.data()) : null,
+        this.clock.now(),
+        request.rule,
+      );
+      if (next) tx.set(ref, { ...next });
     });
   }
 }

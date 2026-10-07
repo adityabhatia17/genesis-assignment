@@ -9,5 +9,18 @@
       ]
     }
   ],
-  "fieldOverrides": []
+  "fieldOverrides": [
+    {
+      "collectionGroup": "candidates",
+      "fieldPath": "expireAt",
+      "ttl": true,
+      "indexes": []
+    },
+    {
+      "collectionGroup": "staged",
+      "fieldPath": "expireAt",
+      "ttl": true,
+      "indexes": []
+    }
+  ]
 }

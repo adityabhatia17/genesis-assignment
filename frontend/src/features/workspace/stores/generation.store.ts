@@ -1,8 +1,10 @@
 import { defineStore } from 'pinia';
 import { computed, ref, shallowRef } from 'vue';
 import { toast } from 'vue-sonner';
+import type { SelectCandidateResult } from '@/contracts/api';
 import { LIMITS } from '@/contracts/limits';
 import type { GenerationEvent } from '@/contracts/sse';
+import type { RankedEntry } from '@/contracts/variants';
 import { toUserMessage } from '@/lib/errors';
 import { isApiError } from '@/lib/http';
 import { newId } from '@/lib/ids';
@@ -12,6 +14,7 @@ import {
   cancelGeneration,
   discardGeneration,
 } from '@/services/api/generations.api';
+import { getVariantsResult } from '@/services/api/variants.api';
 import { watchGeneration } from '@/services/firestore/generations.repo';
 import { createGenerationBus } from './generation-bus';
 import {
@@ -210,6 +213,13 @@ export const useGenerationStore = defineStore('generation', () => {
         }
         latest = snapshot;
         dispatch({ type: 'reconciled', snapshot });
+        if (
+          state.value.status === 'interrupted' &&
+          snapshot.mode === 'variants' &&
+          state.value.generationId === generationId
+        ) {
+          void recoverVariants(generationId);
+        }
         if (isTerminal(state.value.status) || state.value.generationId !== generationId) cleanup();
         else checkStale();
       },
@@ -274,6 +284,25 @@ export const useGenerationStore = defineStore('generation', () => {
     }
   }
 
+  async function recoverVariants(generationId: string): Promise<void> {
+    try {
+      const result = await getVariantsResult(project().projectId, generationId);
+      if (state.value.generationId !== generationId) return;
+      if (result.top.length === 0) return;
+      dispatch({ type: 'variants-loaded', top: result.top, notice: result.notice });
+    } catch (error) {
+      console.warn('[generation] could not recover options', error);
+    }
+  }
+
+  function showVariants(top: readonly RankedEntry[], notice: 'only_one_option' | 'unjudged' | null): void {
+    dispatch({ type: 'variants-loaded', top, notice });
+  }
+
+  function markSelected(result: SelectCandidateResult): void {
+    dispatch({ type: 'variants-selected', result });
+  }
+
   function retry(): void {
     const prompt = state.value.prompt;
     if (!prompt || active.value) return;
@@ -285,12 +314,48 @@ export const useGenerationStore = defineStore('generation', () => {
     if (isTerminal(state.value.status)) dispatch({ type: 'reset' });
   }
 
+  /** Drops a finished or waiting run so the composer can be used again. */
+  function clear(): void {
+    if (isActive(state.value.status)) return;
+    dispatch({ type: 'reset' });
+  }
+
   /**
    * Called with the project's latest generation (page load) or its activeGeneration (another tab).
    * Shows running generations and unresolved partial results; ignores everything else.
    */
-  function hydrate(snapshot: GenerationSnapshot): void {
+  function hydrate(
+    snapshot: GenerationSnapshot,
+    ctx?: { latestSnapshotId?: string | null },
+  ): void {
     if (state.value.status !== 'idle' || handledIds.has(snapshot.id)) return;
+    if (snapshot.mode === 'variants' && snapshot.status === 'awaiting_selection') {
+      if (snapshot.variants?.resolution) return;
+      const base = snapshot.variants?.baseSnapshotId ?? null;
+      const latest = ctx?.latestSnapshotId ?? null;
+      if (base !== latest) return;
+      handledIds.add(snapshot.id);
+      dispatch({
+        type: 'attach',
+        generationId: snapshot.id,
+        prompt: snapshot.prompt,
+        at: Date.now(),
+      });
+      dispatch({ type: 'reconciled', snapshot });
+      return;
+    }
+    if (snapshot.mode === 'variants' && snapshot.status === 'interrupted') {
+      handledIds.add(snapshot.id);
+      dispatch({
+        type: 'attach',
+        generationId: snapshot.id,
+        prompt: snapshot.prompt,
+        at: Date.now(),
+      });
+      dispatch({ type: 'reconciled', snapshot });
+      void recoverVariants(snapshot.id);
+      return;
+    }
     if (snapshot.status === 'streaming') {
       attach(snapshot.id, snapshot.prompt);
       return;
@@ -321,6 +386,9 @@ export const useGenerationStore = defineStore('generation', () => {
     cancel,
     retry,
     dismiss,
+    clear,
     hydrate,
+    showVariants,
+    markSelected,
   };
 });

@@ -35,6 +35,14 @@ const RawSchema = z.object({
     .default('true')
     .transform((v) => v === 'true'),
   GENERATION_DAILY_GLOBAL_CAP: z.coerce.number().int().nonnegative().default(200),
+  VARIANTS_ENABLED: z.enum(['true', 'false']).default('false').transform((v) => v === 'true'),
+  VARIANTS_COUNT: z.coerce.number().int().min(2).max(4).default(4),
+  VARIANTS_USER_PER_10MIN: z.coerce.number().int().min(1).default(2),
+  VARIANTS_USER_PER_DAY: z.coerce.number().int().min(1).default(3),
+  VARIANTS_GLOBAL_PER_DAY: z.coerce.number().int().min(0).default(10),
+  VARIANTS_DAILY_BUDGET_CENTS: z.coerce.number().int().min(0).default(1000),
+  VARIANTS_CHECKLIST_MODEL: z.string().min(1).default('claude-haiku-4-5'),
+  VARIANTS_JUDGE_MODEL: z.string().default(''),
 });
 
 export interface RuntimeConfig {
@@ -51,6 +59,14 @@ export interface RuntimeConfig {
   readonly sseSmokeEnabled: boolean;
   readonly generationEnabled: boolean;
   readonly generationDailyGlobalCap: number;
+  readonly variantsEnabled: boolean;
+  readonly variantsCount: number;
+  readonly variantsUserPer10Min: number;
+  readonly variantsUserPerDay: number;
+  readonly variantsGlobalPerDay: number;
+  readonly variantsDailyBudgetCents: number;
+  readonly variantsChecklistModel: string;
+  readonly variantsJudgeModel: string;
   /** Out of v1 (R-B). Always false. */
   readonly anthropicFastMode: false;
   /** Out of v1. Always false. */
@@ -73,6 +89,14 @@ export function parseRuntimeConfig(raw: Record<string, unknown>): RuntimeConfig 
     sseSmokeEnabled: r.SSE_SMOKE_ENABLED,
     generationEnabled: r.GENERATION_ENABLED,
     generationDailyGlobalCap: r.GENERATION_DAILY_GLOBAL_CAP,
+    variantsEnabled: r.VARIANTS_ENABLED,
+    variantsCount: r.VARIANTS_COUNT,
+    variantsUserPer10Min: r.VARIANTS_USER_PER_10MIN,
+    variantsUserPerDay: r.VARIANTS_USER_PER_DAY,
+    variantsGlobalPerDay: r.VARIANTS_GLOBAL_PER_DAY,
+    variantsDailyBudgetCents: r.VARIANTS_DAILY_BUDGET_CENTS,
+    variantsChecklistModel: r.VARIANTS_CHECKLIST_MODEL,
+    variantsJudgeModel: r.VARIANTS_JUDGE_MODEL,
     anthropicFastMode: false,
     hlExtendedMethods: false,
   });
@@ -94,6 +118,14 @@ export function loadRuntimeConfig(): RuntimeConfig {
     SSE_SMOKE_ENABLED: p.SSE_SMOKE_ENABLED.value(),
     GENERATION_ENABLED: p.GENERATION_ENABLED.value(),
     GENERATION_DAILY_GLOBAL_CAP: p.GENERATION_DAILY_GLOBAL_CAP.value(),
+    VARIANTS_ENABLED: p.VARIANTS_ENABLED.value(),
+    VARIANTS_COUNT: p.VARIANTS_COUNT.value(),
+    VARIANTS_USER_PER_10MIN: p.VARIANTS_USER_PER_10MIN.value(),
+    VARIANTS_USER_PER_DAY: p.VARIANTS_USER_PER_DAY.value(),
+    VARIANTS_GLOBAL_PER_DAY: p.VARIANTS_GLOBAL_PER_DAY.value(),
+    VARIANTS_DAILY_BUDGET_CENTS: p.VARIANTS_DAILY_BUDGET_CENTS.value(),
+    VARIANTS_CHECKLIST_MODEL: p.VARIANTS_CHECKLIST_MODEL.value(),
+    VARIANTS_JUDGE_MODEL: p.VARIANTS_JUDGE_MODEL.value(),
   });
 }
 
@@ -120,4 +152,36 @@ export function modelConfigError(
 ): string | null {
   if (config.llmProvider === 'fake' || secrets.anthropicApiKey) return null;
   return 'ANTHROPIC_API_KEY is empty. Set it in functions/.secret.local (emulators) or Secret Manager, or set LLM_PROVIDER=fake to use the scripted model.';
+}
+
+/**
+ * Why variants cannot run with this setup, or null when they can.
+ * A non-null result disables variants; generation itself is unaffected.
+ */
+export function variantsConfigError(
+  config: Pick<
+    RuntimeConfig,
+    | 'variantsEnabled'
+    | 'llmProvider'
+    | 'anthropicModel'
+    | 'variantsJudgeModel'
+    | 'variantsChecklistModel'
+  >,
+  secrets: Pick<Secrets, 'anthropicApiKey'>,
+  priced: (model: string) => boolean,
+): string | null {
+  if (!config.variantsEnabled) return null;
+  if (!config.variantsJudgeModel) return 'VARIANTS_JUDGE_MODEL is empty.';
+  if (config.variantsJudgeModel === config.anthropicModel) {
+    return 'VARIANTS_JUDGE_MODEL must differ from ANTHROPIC_MODEL.';
+  }
+  if (config.llmProvider === 'fake') return null;
+  if (!secrets.anthropicApiKey) return 'ANTHROPIC_API_KEY is empty, so variants cannot call a model.';
+  if (!priced(config.variantsChecklistModel)) {
+    return `No price for checklist model ${config.variantsChecklistModel}.`;
+  }
+  if (!priced(config.variantsJudgeModel)) {
+    return `No price for judge model ${config.variantsJudgeModel}.`;
+  }
+  return null;
 }

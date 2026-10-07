@@ -44,9 +44,12 @@ const PRICES: Record<string, { input: number; output: number }> = {
   'claude-opus-5': { input: 5, output: 25 },
   'claude-opus-5-5': { input: 4, output: 20 },
   'claude-sonnet-5': { input: 2, output: 10 },
+  'claude-sonnet-5-5': { input: 2, output: 10 },
   'claude-fable-5-1': { input: 10, output: 50 },
   'claude-haiku-4-5': { input: 1, output: 5 },
 };
+
+export const hasModelPrice = (model: string): boolean => model in PRICES;
 
 /** USD per the published per-MTok prices; cache reads 0.1×, cache writes 1.25× input. */
 export function estimateCostUsd(model: string, u: TokenUsage): number {

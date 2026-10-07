@@ -659,7 +659,7 @@ stateDiagram-v2
 | ------------------------------- | --------------------------------------------------------------------------- | ------------------------------------------- |
 | Users                           | < 20                                                                        | Firestore/Functions scale far beyond        |
 | Generations                     | < 200 total                                                                 | —                                           |
-| Concurrent generations          | ≤ 5                                                                         | `generate` max 5 instances × 20 concurrency |
+| Concurrent generations          | ≤ 5                                                                         | `generate` max 5 instances × 10 concurrency, 2GiB. Variants, when enabled, cap at 2 runs per instance |
 | HighLevel calls                 | < 5k/day                                                                    | 200k/day/location limit                     |
 | Firestore writes per generation | ~40–60 (commit) + ~25 staging + ~20 heartbeats                              | Free tier covers demo                       |
 | Cost                            | Anthropic ~USD 0.2–0.3/generation; infra ~USD 5–15/month with min instances | Budget alert USD 25                         |
@@ -683,3 +683,9 @@ Requirement → design → task → verification matrix: [`research/01`](researc
 | `.github/workflows/`                        | CI (+ optional deploy)                                   | GitHub Actions                                         |
 
 Full tree: [`04-high-level-design.md`](04-high-level-design.md) §10.
+
+## 13. Variants add-on
+
+The first generation in a project can produce four candidates and keep the top two for the owner to choose. The design is [`13`](13-variants-feature.md). The backend lives under `functions/src/modules/generation/variants/` and is off unless `VARIANTS_ENABLED=true` and `VARIANTS_JUDGE_MODEL` is set to a model other than `ANTHROPIC_MODEL`.
+
+Progress is SSE (`variants.phase`, `candidate.progress`). The terminal event is `variants.ready`, which carries scores, not files. Selecting a candidate is `POST /v1/projects/:projectId/generations/:generationId/variants/select` on the `api` function. A closed browser tab aborts an in-request run. A Cloud Tasks worker is specified and not built.

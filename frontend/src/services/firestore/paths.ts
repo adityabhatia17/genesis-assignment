@@ -8,6 +8,7 @@ import type {
   MessageDoc,
   ProjectDoc,
   SnapshotDoc,
+  StagedFileDoc,
   UserEventDoc,
 } from '@/contracts/firestore-docs';
 import { db } from '@/lib/firebase';
@@ -45,6 +46,16 @@ export const refs = {
     doc(db(), ...project(uid, pid), 'generations', gid).withConverter(
       readConverter<GenerationDoc<Timestamp>>(),
     ),
+  candidateStaged: (uid: string, pid: string, gid: string, cid: string) =>
+    collection(
+      db(),
+      ...project(uid, pid),
+      'generations',
+      gid,
+      'candidates',
+      cid,
+      'staged',
+    ).withConverter(readConverter<StagedFileDoc<Timestamp>>()),
   snapshots: (uid: string, pid: string) =>
     collection(db(), ...project(uid, pid), 'snapshots').withConverter(
       readConverter<SnapshotDoc<Timestamp>>(),

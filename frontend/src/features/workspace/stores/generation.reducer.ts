@@ -1,7 +1,8 @@
-import type { ApplyResult } from '@/contracts/api';
+import type { ApplyResult, SelectCandidateResult } from '@/contracts/api';
 import type { Issue, PartialResult } from '@/contracts/firestore-docs';
 import type { FileLanguage } from '@/contracts/paths';
 import type { GenerationEvent, GenerationPhase } from '@/contracts/sse';
+import type { RankedEntry } from '@/contracts/variants';
 
 export type GenerationStatus =
   | 'idle'
@@ -9,6 +10,7 @@ export type GenerationStatus =
   | 'streaming'
   | 'cancelling'
   | 'reconciling'
+  | 'awaiting_selection'
   | 'completed'
   | 'failed'
   | 'cancelled'
@@ -19,6 +21,39 @@ export const isTerminal = (s: GenerationStatus): s is TerminalStatus =>
   s === 'completed' || s === 'failed' || s === 'interrupted' || s === 'cancelled';
 export const isActive = (s: GenerationStatus): boolean =>
   s === 'submitting' || s === 'streaming' || s === 'reconciling' || s === 'cancelling';
+/** The run has options ready and is waiting for the owner. Not active, not terminal. */
+export const isAwaitingSelection = (s: GenerationStatus): boolean => s === 'awaiting_selection';
+
+export type FallbackReason =
+  | 'disabled'
+  | 'budget'
+  | 'user_limit'
+  | 'global_limit'
+  | 'busy'
+  | 'not_first';
+export type VariantsPhase = 'checklist' | 'generating' | 'scoring' | 'judging' | 'ranking';
+export type CandidateStage =
+  | 'queued'
+  | 'generating'
+  | 'retrying'
+  | 'validating'
+  | 'scoring'
+  | 'done'
+  | 'failed';
+
+export interface VariantsProgress {
+  phase: VariantsPhase | null;
+  candidates: Readonly<Record<string, CandidateStage>>;
+  top: readonly RankedEntry[] | null;
+  notice: 'only_one_option' | 'unjudged' | null;
+}
+
+export interface VariantsSnapshot {
+  resolution: 'selected' | 'discarded' | null;
+  baseSnapshotId: string | null;
+  notice: 'only_one_option' | 'unjudged' | null;
+  top: readonly RankedEntry[] | null;
+}
 
 export interface FileOpState {
   path: string;
@@ -63,17 +98,23 @@ export interface GenerationState {
   lastSeq: number;
   lastEventAt: number | null;
   startedAt: number | null;
+  mode: 'single' | 'variants' | null;
+  fallbackReason: FallbackReason | null;
+  variants: VariantsProgress | null;
 }
 
 /** What the reducer needs from a persisted generation document (see generations.repo.ts). */
 export interface GenerationSnapshot {
   id: string;
-  status: 'streaming' | TerminalStatus;
+  status: 'streaming' | 'awaiting_selection' | TerminalStatus;
   prompt: string;
   error: GenerationErrorState | null;
   partial: PartialResult | null;
   result: GenerationSummary | null;
   heartbeatAtMs: number | null;
+  /** Absent on snapshots built before variants. Treat as single. */
+  mode?: 'single' | 'variants';
+  variants?: VariantsSnapshot | null;
 }
 
 export type GenerationAction =
@@ -85,6 +126,8 @@ export type GenerationAction =
   | { type: 'stream-lost' }
   | { type: 'reconciled'; snapshot: GenerationSnapshot }
   | { type: 'partial-applied'; result: ApplyResult }
+  | { type: 'variants-loaded'; top: readonly RankedEntry[]; notice: VariantsProgress['notice'] }
+  | { type: 'variants-selected'; result: SelectCandidateResult }
   | { type: 'reset' };
 
 export function initialGenerationState(): GenerationState {
@@ -105,6 +148,9 @@ export function initialGenerationState(): GenerationState {
     lastSeq: 0,
     lastEventAt: null,
     startedAt: null,
+    mode: null,
+    fallbackReason: null,
+    variants: null,
   };
 }
 
@@ -141,7 +187,16 @@ function reduceEvent(state: GenerationState, e: GenerationEvent, at: number): Ge
 
   switch (e.type) {
     case 'generation.started':
-      return { ...base, phase: 'context' };
+      return {
+        ...base,
+        phase: 'context',
+        mode: e.data.mode ?? 'single',
+        fallbackReason: e.data.fallbackReason ?? null,
+        variants:
+          (e.data.mode ?? 'single') === 'variants'
+            ? { phase: null, candidates: {}, top: null, notice: null }
+            : null,
+      };
     case 'generation.phase':
       return { ...base, phase: e.data.phase };
     case 'assistant.thinking':
@@ -231,6 +286,32 @@ function reduceEvent(state: GenerationState, e: GenerationEvent, at: number): Ge
         error: null,
         partial: e.data.partial,
       };
+    case 'variants.phase': {
+      if (!state.variants) return base;
+      return { ...base, variants: { ...state.variants, phase: e.data.phase } };
+    }
+    case 'candidate.progress': {
+      if (!state.variants) return base;
+      return {
+        ...base,
+        variants: {
+          ...state.variants,
+          candidates: { ...state.variants.candidates, [e.data.candidateId]: e.data.stage },
+        },
+      };
+    }
+    case 'variants.ready':
+      return {
+        ...base,
+        ...end,
+        status: 'awaiting_selection',
+        variants: {
+          phase: null,
+          candidates: state.variants?.candidates ?? {},
+          top: e.data.top,
+          notice: e.data.notice,
+        },
+      };
   }
 }
 
@@ -246,6 +327,22 @@ function reduceReconciled(state: GenerationState, g: GenerationSnapshot): Genera
     streamingPath: null,
     prompt: state.prompt || g.prompt,
   };
+  if (g.status === 'awaiting_selection') {
+    return {
+      ...common,
+      status: 'awaiting_selection',
+      mode: g.mode ?? state.mode ?? 'variants',
+      error: null,
+      partial: null,
+      result: null,
+      variants: {
+        phase: null,
+        candidates: state.variants?.candidates ?? {},
+        top: g.variants?.top ?? state.variants?.top ?? null,
+        notice: g.variants?.notice ?? state.variants?.notice ?? null,
+      },
+    };
+  }
   switch (g.status) {
     case 'completed':
       return {
@@ -316,6 +413,45 @@ export function reduceGeneration(
       return isActive(state.status) ? { ...state, status: 'reconciling' } : state;
     case 'reconciled':
       return reduceReconciled(state, action.snapshot);
+    case 'variants-loaded': {
+      const open =
+        state.status === 'interrupted' ||
+        state.status === 'awaiting_selection' ||
+        state.status === 'reconciling' ||
+        state.status === 'failed';
+      if (!open || action.top.length === 0) return state;
+      return {
+        ...state,
+        status: 'awaiting_selection',
+        mode: 'variants',
+        error: null,
+        phase: null,
+        streamingPath: null,
+        variants: {
+          phase: null,
+          candidates: state.variants?.candidates ?? {},
+          top: action.top,
+          notice: action.notice,
+        },
+      };
+    }
+    case 'variants-selected':
+      return {
+        ...state,
+        status: 'completed',
+        error: null,
+        partial: null,
+        phase: null,
+        streamingPath: null,
+        result: {
+          snapshotId: action.result.snapshotId,
+          snapshotSeq: action.result.snapshotSeq,
+          changedPaths: action.result.appliedPaths,
+          deletedPaths: [],
+          rejected: [],
+          noChanges: false,
+        },
+      };
     case 'partial-applied':
       return {
         ...state,

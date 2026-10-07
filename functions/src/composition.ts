@@ -4,6 +4,7 @@ import {
   loadRuntimeConfig,
   loadSecrets,
   modelConfigError,
+  variantsConfigError,
   type RuntimeConfig,
 } from './config/runtime-config.js';
 import { LIMITS } from './contracts/limits.js';
@@ -15,7 +16,18 @@ import { ContextBuilder } from './modules/generation/context/context-builder.js'
 import { generationRouter } from './modules/generation/generate.app.js';
 import { AnthropicProvider } from './modules/generation/llm/anthropic.provider.js';
 import { FakeProvider } from './modules/generation/llm/fake.provider.js';
-import type { ModelProvider } from './modules/generation/llm/model-provider.js';
+import { hasModelPrice, type ModelProvider } from './modules/generation/llm/model-provider.js';
+import { AnthropicStructuredClient } from './modules/generation/llm/anthropic-structured.client.js';
+import { FakeStructuredClient } from './modules/generation/llm/fake-structured.client.js';
+import { GatedProvider, Semaphore } from './modules/generation/llm/gated-provider.js';
+import { ChecklistService } from './modules/generation/variants/checklist/checklist.service.js';
+import { JudgeService } from './modules/generation/variants/judge/judge.service.js';
+import { VariantsOrchestrator } from './modules/generation/variants/variants.orchestrator.js';
+import { VariantsRepo } from './modules/generation/variants/variants.repo.js';
+import { variantsRouter } from './modules/generation/variants/variants.routes.js';
+import { DailyBudgetRepo } from './modules/rate-limit/budget.repo.js';
+import { InstanceGate, VariantsAdmission } from './modules/rate-limit/variants-admission.js';
+import { CandidateRunner } from './modules/generation/candidate/candidate-runner.js';
 import { GenerationOrchestrator } from './modules/generation/orchestrator.js';
 import { CommitService } from './modules/generation/persistence/commit.service.js';
 import { GenerationsRepo } from './modules/generation/persistence/generations.repo.js';
@@ -106,6 +118,7 @@ function buildApiApp(config: RuntimeConfig): Express {
     connectionRouter(connections, clock),
     runtimeRouter(runtime),
     generationControlRouter({ generations: new GenerationsRepo(db), commits, clock }),
+    variantsRouter({ repo: new VariantsRepo(db), commits, clock }),
     filesRouter(new FileSaveService(db, clock), limiter),
     snapshotsRouter(new RestoreService(db, blobs, commits, clock), limiter),
   ];
@@ -128,6 +141,8 @@ function buildGenerateApp(config: RuntimeConfig): Express {
   // Without a model, generation answers GENERATION_DISABLED instead of failing each run.
   const modelError = modelConfigError(config, secrets);
   if (modelError) logger.error('generate.model_not_configured', { reason: modelError });
+  const variantsReason = variantsConfigError(config, secrets, hasModelPrice);
+  if (config.variantsEnabled && variantsReason) logger.warn('variants.disabled', { reason: variantsReason });
   const cipher = createTokenCipher(secrets.tokenEncryptionKey);
   const connections = new FirestoreConnectionRepo(db);
   const tokenEndpoint = createTokenEndpointClient({
@@ -167,20 +182,73 @@ function buildGenerateApp(config: RuntimeConfig): Express {
             fastMode: config.anthropicFastMode,
           },
         );
+  const generations = new GenerationsRepo(db);
+  const context = new ContextBuilder(db, locationContext);
   const orchestrator = new GenerationOrchestrator({
-    generations: new GenerationsRepo(db),
+    generations,
     commits: new CommitService(db, new BlobsRepo(db)),
-    context: new ContextBuilder(db, locationContext),
-    provider,
+    context,
+    runner: new CandidateRunner(provider, clock, logger),
     clock,
+  });
+  const anthropic =
+    config.llmProvider === 'anthropic'
+      ? new Anthropic({
+          apiKey: secrets.anthropicApiKey ?? '',
+          maxRetries: 2,
+          timeout: 600_000,
+          ...(config.anthropicWorkspaceId
+            ? { defaultHeaders: { 'anthropic-workspace-id': config.anthropicWorkspaceId } }
+            : {}),
+        })
+      : null;
+  const structured = anthropic ? new AnthropicStructuredClient(anthropic) : new FakeStructuredClient();
+  const limiter = new FirestoreRateLimiter(db, clock);
+  const admission = new VariantsAdmission({
+    limiter,
+    budget: new DailyBudgetRepo(db, clock),
+    gate: new InstanceGate(),
+    cfg: config,
+  });
+  const repo = new VariantsRepo(db);
+  const variants = new VariantsOrchestrator({
+    generations,
+    repo,
+    context,
+    runner: new CandidateRunner(
+      new GatedProvider(provider, new Semaphore(LIMITS.variants.maxConcurrentLlmStreams)),
+      clock,
+      logger,
+    ),
+    checklist: new ChecklistService(structured, config.variantsChecklistModel),
+    judge: new JudgeService(structured, config.variantsJudgeModel || 'fake-judge'),
+    admission,
+    clock,
+    log: logger,
+    checklistModel: config.variantsChecklistModel,
+    judgeModel: config.variantsJudgeModel,
+    count: config.variantsCount,
+    highlevel: async (uid) => {
+      const ctx = await locationContext.getContext(uid);
+      return {
+        calendarCount: ctx.status === 'connected' ? ctx.calendars.length : null,
+        methods: ctx.availableMethods,
+      };
+    },
   });
   const publicRouters: Router[] = config.sseSmokeEnabled ? [sseSmokeRouter()] : [];
   const authedRouters: Router[] = [
     generationRouter({
       orchestrator,
-      limiter: new FirestoreRateLimiter(db, clock),
+      limiter,
       generationEnabled: config.generationEnabled && !modelError,
       generationDailyGlobalCap: config.generationDailyGlobalCap,
+      variants: {
+        orchestrator: variants,
+        admission,
+        repo,
+        enabled: config.variantsEnabled && !variantsReason && !modelError,
+      },
     }),
   ];
   return createHttpApp({

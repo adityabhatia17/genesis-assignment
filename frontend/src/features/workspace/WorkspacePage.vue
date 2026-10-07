@@ -5,6 +5,7 @@ import { useAuth } from '@/composables/useAuth';
 import { useFirestoreDoc } from '@/composables/useFirestoreDoc';
 import { toUserMessage } from '@/lib/errors';
 import { refs } from '@/services/firestore/paths';
+import { useVariantsSession } from '@/features/variants/useVariantsSession';
 import { useGeneration } from './composables/useGeneration';
 import { useProjectFiles } from './composables/useProjectFiles';
 import { useRemoteFileSync } from './composables/useRemoteFileSync';
@@ -40,6 +41,7 @@ provideWorkspace({
 });
 
 useGeneration();
+useVariantsSession();
 useStreamingEditor();
 useRemoteFileSync();
 

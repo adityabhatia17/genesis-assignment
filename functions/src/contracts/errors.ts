@@ -16,6 +16,9 @@ export const ERROR_CODES = [
   'SNAPSHOT_ALREADY_CURRENT',
   'GENERATION_NOT_APPLYABLE',
   'GENERATION_NOT_CANCELLABLE',
+  'GENERATION_NOT_AWAITING_SELECTION',
+  'CANDIDATE_NOT_FOUND',
+  'CANDIDATE_NOT_SELECTABLE',
   'GENERATION_DISABLED',
   'PROJECT_LOCATION_MISMATCH',
   'GENERATION_INVALID_OUTPUT',
@@ -93,6 +96,17 @@ export const ERROR_CATALOG: Readonly<Record<ErrorCode, ErrorSpec>> = {
     status: 409,
     retryable: false,
     message: 'This generation is no longer running.',
+  },
+  GENERATION_NOT_AWAITING_SELECTION: {
+    status: 409,
+    retryable: false,
+    message: 'There is nothing to choose for this generation.',
+  },
+  CANDIDATE_NOT_FOUND: { status: 404, retryable: false, message: 'That option was not found.' },
+  CANDIDATE_NOT_SELECTABLE: {
+    status: 409,
+    retryable: false,
+    message: 'That option can no longer be chosen.',
   },
   GENERATION_DISABLED: {
     status: 503,
